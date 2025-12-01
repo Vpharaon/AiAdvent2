@@ -1,5 +1,6 @@
 plugins {
     kotlin("multiplatform") version "2.2.20"
+    kotlin("plugin.serialization") version "2.2.20"
     id("org.jetbrains.compose") version "1.7.1"
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
 }
@@ -21,6 +22,10 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+                implementation("io.ktor:ktor-client-core:3.0.1")
+                implementation("io.ktor:ktor-client-content-negotiation:3.0.1")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
             }
         }
         val commonTest by getting {
@@ -36,6 +41,7 @@ kotlin {
                 implementation(compose.ui)
                 implementation(compose.foundation)
                 implementation(compose.runtime)
+                implementation("io.ktor:ktor-client-cio:3.0.1")
             }
         }
 
