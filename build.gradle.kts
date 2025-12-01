@@ -26,6 +26,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-content-negotiation:3.0.1")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+                implementation("io.insert-koin:koin-core:4.0.0")
             }
         }
         val commonTest by getting {
@@ -42,6 +43,7 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.runtime)
                 implementation("io.ktor:ktor-client-cio:3.0.1")
+                implementation("io.insert-koin:koin-compose:4.0.0")
             }
         }
 
