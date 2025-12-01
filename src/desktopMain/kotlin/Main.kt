@@ -24,8 +24,8 @@ import org.koin.compose.koinInject
 import viewmodel.ChatViewModel
 
 fun main() = application {
-    // API ключ (можно вынести в переменные окружения или конфиг файл)
-    val apiKey = System.getenv("OPENAI_API_KEY") ?: "your-api-key-here"
+    // GLM API ключ (можно вынести в переменные окружения или конфиг файл)
+    val apiKey = System.getenv("GLM_API_KEY") ?: "your-glm-api-key-here"
 
     // Корутин Scope для приложения
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
