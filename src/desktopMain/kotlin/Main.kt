@@ -52,6 +52,7 @@ fun ChatScreen() {
     val viewModel: ChatViewModel = koinInject()
     val messages by viewModel.messages.collectAsState()
     val input by viewModel.input.collectAsState()
+    val isTyping by viewModel.isTyping.collectAsState()
 
     Column(
         modifier = Modifier
@@ -62,6 +63,7 @@ fun ChatScreen() {
         // Область сообщений
         MessagesArea(
             messages = messages,
+            isTyping = isTyping,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
@@ -82,14 +84,15 @@ fun ChatScreen() {
 @Composable
 fun MessagesArea(
     messages: List<Message>,
+    isTyping: Boolean,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
 
-    // Автопрокрутка вниз при добавлении новых сообщений
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
+    // Автопрокрутка вниз при добавлении новых сообщений или изменении isTyping
+    LaunchedEffect(messages.size, isTyping) {
+        if (messages.isNotEmpty() || isTyping) {
+            listState.animateScrollToItem(if (isTyping) messages.size else messages.size - 1)
         }
     }
 
@@ -106,6 +109,46 @@ fun MessagesArea(
         ) {
             items(messages) { message ->
                 MessageItem(message = message)
+            }
+
+            // Индикатор "Bot is typing..."
+            if (isTyping) {
+                item {
+                    TypingIndicator()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TypingIndicator() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start
+    ) {
+        Card(
+            modifier = Modifier.widthIn(max = 200.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFE8E8E8)
+            )
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Bot is typing",
+                    color = Color.Black,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "...",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }

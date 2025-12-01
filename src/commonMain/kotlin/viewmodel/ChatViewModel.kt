@@ -21,6 +21,10 @@ class ChatViewModel(
     private val _input = MutableStateFlow("")
     val input: StateFlow<String> = _input.asStateFlow()
 
+    // Состояние "бот печатает"
+    private val _isTyping = MutableStateFlow(false)
+    val isTyping: StateFlow<Boolean> = _isTyping.asStateFlow()
+
     init {
         // Подписываемся на изменения в репозитории
         coroutineScope.launch {
@@ -45,7 +49,9 @@ class ChatViewModel(
 
         // Отправляем сообщение в фоновом потоке
         coroutineScope.launch {
+            _isTyping.value = true
             repository.sendMessage(messageText)
+            _isTyping.value = false
         }
     }
 
