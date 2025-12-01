@@ -12,7 +12,9 @@ repositories {
 kotlin {
     jvmToolchain(17)
 
-    // Пока пустой блок, desktop target добавим в следующем шаге
+    // Desktop target (JVM)
+    jvm("desktop")
+
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -21,6 +23,16 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+            }
+        }
+
+        val desktopMain by getting {
+            dependencies {
+            }
+        }
+
+        val desktopTest by getting {
+            dependencies {
             }
         }
     }
