@@ -1,5 +1,7 @@
 plugins {
     kotlin("multiplatform") version "2.2.20"
+    id("org.jetbrains.compose") version "1.7.1"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
 }
 
 group = "org.example"
@@ -28,6 +30,11 @@ kotlin {
 
         val desktopMain by getting {
             dependencies {
+                implementation(compose.desktop.currentOs)
+                implementation(compose.material3)
+                implementation(compose.ui)
+                implementation(compose.foundation)
+                implementation(compose.runtime)
             }
         }
 
@@ -35,5 +42,11 @@ kotlin {
             dependencies {
             }
         }
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "MainKt"
     }
 }
