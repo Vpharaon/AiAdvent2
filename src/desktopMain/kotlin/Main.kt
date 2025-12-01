@@ -22,10 +22,29 @@ import model.Message
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import viewmodel.ChatViewModel
+import java.io.File
+import java.io.FileInputStream
+import java.util.Properties
+
+fun loadLocalProperties(): Properties {
+    val properties = Properties()
+    val localPropertiesFile = File("local.properties")
+    if (localPropertiesFile.exists()) {
+        FileInputStream(localPropertiesFile).use { properties.load(it) }
+    }
+    return properties
+}
 
 fun main() = application {
-    // GLM API ключ (можно вынести в переменные окружения или конфиг файл)
-    val apiKey = System.getenv("GLM_API_KEY") ?: "your-glm-api-key-here"
+    // Загружаем local.properties
+    val localProperties = loadLocalProperties()
+
+    // Получаем GLM API ключ из local.properties или из переменной окружения
+    val apiKey = localProperties.getProperty("glm.api.key")
+        ?: System.getenv("GLM_API_KEY")
+        ?: throw IllegalStateException(
+            "GLM API key not found! Please set it in local.properties (glm.api.key) or as environment variable (GLM_API_KEY)"
+        )
 
     // Корутин Scope для приложения
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

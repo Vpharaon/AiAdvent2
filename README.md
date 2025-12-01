@@ -30,7 +30,19 @@ cd AiAdvent2
 
 ### 2. Настройка API ключа
 
-Установите переменную окружения с вашим GLM API ключом:
+Создайте файл `local.properties` в корне проекта:
+
+```bash
+cp local.properties.example local.properties
+```
+
+Отредактируйте `local.properties` и укажите ваш GLM API ключ:
+
+```properties
+glm.api.key=ваш-glm-api-ключ
+```
+
+**Альтернативный способ** - использовать переменную окружения:
 
 **macOS/Linux:**
 ```bash
@@ -47,10 +59,10 @@ $env:GLM_API_KEY="ваш-glm-api-ключ"
 set GLM_API_KEY=ваш-glm-api-ключ
 ```
 
-Или измените значение по умолчанию в файле `src/desktopMain/kotlin/Main.kt`:
-```kotlin
-val apiKey = System.getenv("GLM_API_KEY") ?: "ваш-glm-api-ключ"
-```
+**Приоритет загрузки ключа:**
+1. Файл `local.properties` (ключ `glm.api.key`)
+2. Переменная окружения `GLM_API_KEY`
+3. Если не найдено - приложение выбросит исключение
 
 ### 3. Сборка проекта
 

@@ -1,0 +1,6 @@
+# Local Configuration
+# Скопируйте этот файл как local.properties и заполните своими значениями
+
+# GLM API ключ от Zhipu AI
+# Получите ключ на https://open.bigmodel.cn/
+glm.api.key=your-glm-api-key-here
