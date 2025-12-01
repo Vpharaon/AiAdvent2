@@ -46,7 +46,6 @@ fun main() = application {
             "GLM API key not found! Please set it in local.properties (glm.api.key) or as environment variable (GLM_API_KEY)"
         )
 
-    // Корутин Scope для приложения
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     Window(

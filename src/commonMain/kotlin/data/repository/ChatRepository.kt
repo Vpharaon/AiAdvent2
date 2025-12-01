@@ -16,35 +16,47 @@ class ChatRepository(
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
 
     suspend fun sendWelcomeMessage() {
-        val message = ChatMessage(
+        val systemMessage = ChatMessage(
             role = MessageRole.SYSTEM,
-            content = "Ты — полезный AI-ассистент."
+            content = "Ты — полезный AI-ассистент"
         )
-        llmApiClient.sendMessage(messages = listOf(message))
+        val userMessage = ChatMessage(
+            role = MessageRole.USER,
+            content = "Поздоровайся и опиши очень кратко чем ты можешь быть полезен"
+        )
+        sendMessage(messages = listOf(systemMessage, userMessage))
     }
 
     fun getMessages(): List<Message> {
         return _messages.value
     }
 
-    /**
-     * Отправляет сообщение пользователя, получает ответ от LLM и обновляет кеш сообщений.
-     */
-    suspend fun sendMessage(userMessageText: String) {
-        val chatMessagesForApi = _messages.value.map { message ->
+    suspend fun sendUserText(userMessageText: String) {
+        // Создаем сообщение пользователя для UI
+        val userDomainMessage = Message(
+            id = System.currentTimeMillis().toString(),
+            content = userMessageText,
+            role = MessageRole.USER.value,
+            timestamp = System.currentTimeMillis()
+        )
+
+        // Добавляем сообщение пользователя в список сообщений
+        _messages.value += userDomainMessage
+
+        val messages = _messages.value.map { message ->
             ChatMessage(
-                role = MessageRole.valueOf(value = message.role),
+                role = MessageRole.valueOf(value = message.role.uppercase()),
                 content = message.content
             )
         }.toMutableList()
+        sendMessage(messages = messages)
+    }
 
-        val userMessage = ChatMessage(
-            role = MessageRole.USER,
-            content = userMessageText
-        )
-        chatMessagesForApi.add(userMessage)
-
-        val result: Result<data.network.model.ChatResponse> = llmApiClient.sendMessage(chatMessagesForApi)
+    /**
+     * Отправляет сообщение пользователя, получает ответ от LLM и обновляет кеш сообщений.
+     */
+    private suspend fun sendMessage(messages: List<ChatMessage>) {
+        val result: Result<data.network.model.ChatResponse> = llmApiClient.sendMessage(messages = messages)
 
         result.onSuccess { chatResponse ->
 
@@ -70,11 +82,12 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
             _messages.value = _messages.value + errorMessage*/
+
+            //println()
         }
     }
 
-    suspend fun clearMessages() {
+    fun clearMessages() {
         _messages.value = emptyList()
-        sendWelcomeMessage()
     }
 }

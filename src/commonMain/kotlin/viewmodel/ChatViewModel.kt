@@ -31,6 +31,12 @@ class ChatViewModel(
                 _messages.value = newMessages
             }
         }
+
+        coroutineScope.launch {
+            _isTyping.value = true
+            repository.sendWelcomeMessage()
+            _isTyping.value = false
+        }
     }
 
     // Обновление текста ввода
@@ -49,7 +55,7 @@ class ChatViewModel(
         // Отправляем сообщение в фоновом потоке
         coroutineScope.launch {
             _isTyping.value = true
-            repository.sendMessage(messageText)
+            repository.sendUserText(userMessageText = messageText)
             _isTyping.value = false
         }
     }
@@ -58,5 +64,10 @@ class ChatViewModel(
     fun clearChat() {
         repository.clearMessages()
         _input.value = ""
+        coroutineScope.launch {
+            _isTyping.value = true
+            repository.sendWelcomeMessage()
+            _isTyping.value = false
+        }
     }
 }

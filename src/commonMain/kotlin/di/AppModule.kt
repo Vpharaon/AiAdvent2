@@ -13,9 +13,7 @@ fun appModule(apiKey: String, coroutineScope: CoroutineScope) = module {
     // Chat Repository
     single {
         ChatRepository(
-            llmApiClient = { message ->
-                get<LLMApiClient>().sendMessage(message)
-            }
+            llmApiClient = get()
         )
     }
 
