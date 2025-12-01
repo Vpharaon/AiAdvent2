@@ -14,9 +14,25 @@ class ChatRepository(
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
 
+    init {
+        // Добавляем приветственное сообщение от LLM при запуске
+        addWelcomeMessage()
+    }
+
     // Простая генерация ID
     private fun generateId(): String {
         return "${System.currentTimeMillis()}-${Random.nextInt(10000, 99999)}"
+    }
+
+    // Добавление приветственного сообщения
+    private fun addWelcomeMessage() {
+        val welcomeMessage = Message(
+            id = generateId(),
+            content = "Привет! Я ваш AI-ассистент. Чем могу помочь?",
+            isUser = false,
+            timestamp = System.currentTimeMillis()
+        )
+        _messages.value = listOf(welcomeMessage)
     }
 
     // Метод getMessages - возвращает текущий список сообщений
@@ -70,8 +86,9 @@ class ChatRepository(
         }
     }
 
-    // Метод clearMessages - очищает кеш
+    // Метод clearMessages - очищает кеш и начинает новый диалог
     fun clearMessages() {
         _messages.value = emptyList()
+        addWelcomeMessage()
     }
 }
