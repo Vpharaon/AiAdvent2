@@ -18,7 +18,7 @@ import di.appModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import model.Message
+import domain.Message
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import viewmodel.ChatViewModel

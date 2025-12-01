@@ -1,13 +1,12 @@
 package viewmodel
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import model.Message
-import repository.ChatRepository
+import domain.Message
+import data.repository.ChatRepository
 
 class ChatViewModel(
     private val repository: ChatRepository,

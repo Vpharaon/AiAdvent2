@@ -1,9 +1,9 @@
 package di
 
 import kotlinx.coroutines.CoroutineScope
-import network.LLMApiClient
+import data.network.LLMApiClient
 import org.koin.dsl.module
-import repository.ChatRepository
+import data.repository.ChatRepository
 import viewmodel.ChatViewModel
 
 fun appModule(apiKey: String, coroutineScope: CoroutineScope) = module {
@@ -13,7 +13,9 @@ fun appModule(apiKey: String, coroutineScope: CoroutineScope) = module {
     // Chat Repository
     single {
         ChatRepository(
-            llmApiClient = { message -> get<LLMApiClient>().sendMessage(message) }
+            llmApiClient = { message ->
+                get<LLMApiClient>().sendMessage(message)
+            }
         )
     }
 
