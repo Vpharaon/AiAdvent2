@@ -39,9 +39,16 @@ class ChatViewModel(
         }
     }
 
-    // Обновление текста ввода
+    // Обновление текста ввода с валидацией
     fun updateInput(text: String) {
-        _input.value = text
+        // Ограничиваем длину сообщения до 10000 символов
+        if (text.length <= MAX_MESSAGE_LENGTH) {
+            _input.value = text
+        }
+    }
+
+    companion object {
+        private const val MAX_MESSAGE_LENGTH = 10000
     }
 
     // Метод sendMessage - отправляет сообщение через репозиторий

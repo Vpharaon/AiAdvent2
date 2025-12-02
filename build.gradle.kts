@@ -26,6 +26,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-core:3.0.1")
                 implementation("io.ktor:ktor-client-content-negotiation:3.0.1")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.1")
+                implementation("io.ktor:ktor-client-logging:3.0.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
                 implementation("io.insert-koin:koin-core:4.0.0")
             }
@@ -45,6 +46,8 @@ kotlin {
                 implementation(compose.runtime)
                 implementation("io.ktor:ktor-client-cio:3.0.1")
                 implementation("io.insert-koin:koin-compose:4.0.0")
+                implementation("ch.qos.logback:logback-classic:1.4.11")
+                implementation("org.jetbrains:markdown:0.7.3")
             }
         }
 

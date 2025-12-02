@@ -1,4 +1,6 @@
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,7 +16,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import data.repository.SettingsRepository
 import di.appModule
+import domain.Theme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,6 +29,7 @@ import viewmodel.ChatViewModel
 import java.io.File
 import java.io.FileInputStream
 import java.util.Properties
+import ui.MarkdownText
 
 fun loadLocalProperties(): Properties {
     val properties = Properties()
@@ -58,15 +63,41 @@ fun main() = application {
                 modules(appModule(apiKey, appScope))
             }
         ) {
-            MaterialTheme {
-                ChatScreen()
-            }
+            App()
         }
     }
 }
 
 @Composable
-fun ChatScreen() {
+fun App() {
+    val settingsRepository: SettingsRepository = koinInject()
+    val settings by settingsRepository.settings.collectAsState()
+    val systemInDarkTheme = isSystemInDarkTheme()
+    var showSettings by remember { mutableStateOf(false) }
+
+    val useDarkTheme = when (settings.theme) {
+        Theme.LIGHT -> false
+        Theme.DARK -> true
+        Theme.SYSTEM -> systemInDarkTheme
+    }
+
+    val colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme()
+
+    MaterialTheme(colorScheme = colorScheme) {
+        if (showSettings) {
+            SettingsScreen(
+                onBack = { showSettings = false }
+            )
+        } else {
+            ChatScreen(
+                onOpenSettings = { showSettings = true }
+            )
+        }
+    }
+}
+
+@Composable
+fun ChatScreen(onOpenSettings: () -> Unit) {
     val viewModel: ChatViewModel = koinInject()
     val messages by viewModel.messages.collectAsState()
     val input by viewModel.input.collectAsState()
@@ -75,9 +106,25 @@ fun ChatScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
+        // Заголовок с кнопкой настроек
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "LLM Chat",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            IconButton(onClick = onOpenSettings) {
+                Text("⚙️", style = MaterialTheme.typography.titleLarge)
+            }
+        }
+
         // Область сообщений
         MessagesArea(
             messages = messages,
@@ -116,7 +163,7 @@ fun MessagesArea(
 
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         LazyColumn(
             state = listState,
@@ -125,7 +172,7 @@ fun MessagesArea(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(messages) { message ->
+            items(messages, key = { it.id }) { message ->
                 MessageItem(message = message)
             }
 
@@ -149,7 +196,7 @@ fun TypingIndicator() {
             modifier = Modifier.widthIn(max = 200.dp),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFE8E8E8)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             Row(
@@ -159,12 +206,12 @@ fun TypingIndicator() {
             ) {
                 Text(
                     text = "Bot is typing",
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
                     text = "...",
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -174,23 +221,48 @@ fun TypingIndicator() {
 
 @Composable
 fun MessageItem(message: Message) {
+    val backgroundColor = if (message.isUser) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+
+    val textColor = if (message.isUser) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
     ) {
         Card(
-            modifier = Modifier.widthIn(max = 400.dp),
+            modifier = Modifier
+                .widthIn(max = 400.dp)
+                .clickable {
+                    // Копирование текста в буфер обмена
+                    val clipboard = java.awt.Toolkit.getDefaultToolkit().systemClipboard
+                    val stringSelection = java.awt.datatransfer.StringSelection(message.content)
+                    clipboard.setContents(stringSelection, null)
+                },
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (message.isUser) Color(0xFF007AFF) else Color(0xFFE8E8E8)
+                containerColor = backgroundColor
             )
         ) {
-            Text(
-                text = message.content,
-                modifier = Modifier.padding(12.dp),
-                color = if (message.isUser) Color.White else Color.Black,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Column(modifier = Modifier.padding(12.dp)) {
+                MarkdownText(
+                    markdown = message.content,
+                    color = textColor
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = message.formattedTime,
+                    color = textColor.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }
@@ -226,11 +298,7 @@ fun InputArea(
                     }
                 },
             placeholder = { Text("Введите сообщение...") },
-            maxLines = 4,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White
-            )
+            maxLines = 4
         )
 
         // Кнопка Send
@@ -248,6 +316,125 @@ fun InputArea(
             modifier = Modifier.height(56.dp)
         ) {
             Text("Clear Chat")
+        }
+    }
+}
+
+@Composable
+fun SettingsScreen(onBack: () -> Unit) {
+    val settingsRepository: SettingsRepository = koinInject()
+    val settings by settingsRepository.settings.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp)
+    ) {
+        // Заголовок с кнопкой назад
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Настройки",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            IconButton(onClick = onBack) {
+                Text("←", style = MaterialTheme.typography.titleLarge)
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Выбор темы
+                Text(
+                    text = "Тема",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = settings.theme == Theme.LIGHT,
+                        onClick = { settingsRepository.updateTheme(Theme.LIGHT) },
+                        label = { Text("Светлая") }
+                    )
+                    FilterChip(
+                        selected = settings.theme == Theme.DARK,
+                        onClick = { settingsRepository.updateTheme(Theme.DARK) },
+                        label = { Text("Тёмная") }
+                    )
+                    FilterChip(
+                        selected = settings.theme == Theme.SYSTEM,
+                        onClick = { settingsRepository.updateTheme(Theme.SYSTEM) },
+                        label = { Text("Системная") }
+                    )
+                }
+
+                Divider()
+
+                // Температура
+                Text(
+                    text = "Температура: ${String.format("%.2f", settings.temperature)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Slider(
+                    value = settings.temperature.toFloat(),
+                    onValueChange = { settingsRepository.updateTemperature(it.toDouble()) },
+                    valueRange = 0f..2f,
+                    steps = 19
+                )
+                Text(
+                    text = "Более высокие значения делают ответы более случайными",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+
+                Divider()
+
+                // Max Tokens
+                Text(
+                    text = "Максимум токенов",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                OutlinedTextField(
+                    value = settings.maxTokens?.toString() ?: "",
+                    onValueChange = { value ->
+                        val tokens = value.toIntOrNull()
+                        settingsRepository.updateMaxTokens(tokens)
+                    },
+                    placeholder = { Text("По умолчанию (без ограничений)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    text = "Оставьте пустым для значения по умолчанию",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+
+                Divider()
+
+                // Кнопка сброса
+                Button(
+                    onClick = { settingsRepository.resetToDefaults() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Сбросить настройки")
+                }
+            }
         }
     }
 }

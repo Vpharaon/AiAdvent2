@@ -1,15 +1,17 @@
 package data.repository
 
-import data.network.LLMApiClient
+import data.network.LLMApi
 import data.network.model.ChatMessage
 import data.network.model.MessageRole
+import domain.ApiError
 import domain.Message
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class ChatRepository(
-    private val llmApiClient: LLMApiClient
+    private val llmApiClient: LLMApi,
+    private val settingsRepository: SettingsRepository
 ) {
     // In-memory cache для сообщений
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
@@ -56,7 +58,12 @@ class ChatRepository(
      * Отправляет сообщение пользователя, получает ответ от LLM и обновляет кеш сообщений.
      */
     private suspend fun sendMessage(messages: List<ChatMessage>) {
-        val result: Result<data.network.model.ChatResponse> = llmApiClient.sendMessage(messages = messages)
+        val settings = settingsRepository.getCurrentSettings()
+        val result: Result<data.network.model.ChatResponse> = llmApiClient.sendMessage(
+            messages = messages,
+            temperature = settings.temperature,
+            maxTokens = settings.maxTokens
+        )
 
         result.onSuccess { chatResponse ->
 
@@ -74,16 +81,19 @@ class ChatRepository(
             }
 
         }.onFailure { error ->
-            /*// Если произошла ошибка (сеть, API и т.д.)
+            // Если произошла ошибка (сеть, API и т.д.)
+            val userFriendlyMessage = when (error) {
+                is ApiError -> error.getUserFriendlyMessage()
+                else -> "Ошибка: ${error.message ?: "Не удалось получить ответ от сервера"}"
+            }
+
             val errorMessage = Message(
-                id = generateId(),
-                content = "Ошибка: ${error.message}",
-                isUser = false,
+                id = System.currentTimeMillis().toString(),
+                content = userFriendlyMessage,
+                role = MessageRole.ASSISTANT.value,
                 timestamp = System.currentTimeMillis()
             )
-            _messages.value = _messages.value + errorMessage*/
-
-            //println()
+            _messages.value += errorMessage
         }
     }
 

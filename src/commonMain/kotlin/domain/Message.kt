@@ -1,6 +1,8 @@
 package domain
 
 import kotlinx.serialization.Serializable
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * Доменная модель сообщения в чате.
@@ -10,6 +12,7 @@ import kotlinx.serialization.Serializable
  * @property timestamp Временная метка отправки сообщения (в миллисекундах с эпохи Unix)
  * @property role Роль отправителя сообщения (system, user, assistant)
  * @property isUser Флаг, указывающий является ли сообщение от пользователя
+ * @property formattedTime Отформатированное время в виде строки (HH:mm)
  */
 @Serializable
 data class Message(
@@ -20,4 +23,7 @@ data class Message(
 ) {
     val isUser: Boolean
         get() = role == "user"
+
+    val formattedTime: String
+        get() = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(timestamp))
 }
