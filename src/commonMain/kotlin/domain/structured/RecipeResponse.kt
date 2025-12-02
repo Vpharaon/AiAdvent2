@@ -23,3 +23,11 @@ data class Ingredient(
     val amount: String,
     val unit: String?
 )
+
+/**
+ * Рецепт с raw JSON для отладки и демонстрации парсинга
+ */
+data class RecipeWithRaw(
+    val recipe: RecipeResponse,
+    val rawJson: String
+)

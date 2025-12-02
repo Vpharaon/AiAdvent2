@@ -1,6 +1,7 @@
 package data.parser
 
 import domain.structured.RecipeResponse
+import domain.structured.RecipeWithRaw
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 
@@ -44,6 +45,24 @@ class StructuredResponseParser {
             val cleaned = cleanJsonResponse(response)
             val result = json.decodeFromString<RecipeResponse>(cleaned)
             Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(IllegalArgumentException("Failed to parse recipe: ${e.message}", e))
+        }
+    }
+
+    /**
+     * Парсит рецепт блюда с сохранением raw JSON для отладки
+     */
+    fun parseRecipeWithRaw(rawResponse: String): Result<RecipeWithRaw> {
+        return try {
+            val cleaned = cleanJsonResponse(rawResponse)
+            val recipe = json.decodeFromString<RecipeResponse>(cleaned)
+            Result.success(
+                RecipeWithRaw(
+                    recipe = recipe,
+                    rawJson = rawResponse
+                )
+            )
         } catch (e: Exception) {
             Result.failure(IllegalArgumentException("Failed to parse recipe: ${e.message}", e))
         }
