@@ -17,6 +17,12 @@ class ChatRepository(
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
 
+    companion object {
+        // Максимальное количество сообщений в истории для отправки в API
+        // Это предотвращает превышение лимита токенов и уменьшает потребление памяти
+        private const val MAX_HISTORY_MESSAGES = 20
+    }
+
     suspend fun sendWelcomeMessage() {
         val systemMessage = ChatMessage(
             role = MessageRole.SYSTEM,
@@ -45,12 +51,17 @@ class ChatRepository(
         // Добавляем сообщение пользователя в список сообщений
         _messages.value += userDomainMessage
 
-        val messages = _messages.value.map { message ->
-            ChatMessage(
-                role = MessageRole.valueOf(value = message.role.uppercase()),
-                content = message.content
-            )
-        }.toMutableList()
+        // Берем только последние MAX_HISTORY_MESSAGES сообщений для отправки в API
+        // Это предотвращает превышение лимита токенов
+        // Примечание: UI продолжает показывать все сообщения
+        val messages = _messages.value
+            .takeLast(MAX_HISTORY_MESSAGES)
+            .map { message ->
+                ChatMessage(
+                    role = MessageRole.valueOf(value = message.role.uppercase()),
+                    content = message.content
+                )
+            }
         sendMessage(messages = messages)
     }
 
