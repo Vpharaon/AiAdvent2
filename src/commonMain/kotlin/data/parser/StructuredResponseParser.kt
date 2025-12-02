@@ -60,7 +60,8 @@ class StructuredResponseParser {
             Result.success(
                 RecipeWithRaw(
                     recipe = recipe,
-                    rawJson = rawResponse
+                    rawJson = rawResponse,
+                    fullResponseJson = "" // Будет заполнено в repository
                 )
             )
         } catch (e: Exception) {

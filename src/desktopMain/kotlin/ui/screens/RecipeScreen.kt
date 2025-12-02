@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 enum class RecipeTab {
-    FORMATTED, RAW_JSON
+    FORMATTED, RAW_JSON, FULL_RESPONSE
 }
 
 @Composable
@@ -134,7 +134,12 @@ fun RecipeScreen(onBack: () -> Unit) {
                     Tab(
                         selected = selectedTab == RecipeTab.RAW_JSON,
                         onClick = { selectedTab = RecipeTab.RAW_JSON },
-                        text = { Text("Raw JSON") }
+                        text = { Text("Content JSON") }
+                    )
+                    Tab(
+                        selected = selectedTab == RecipeTab.FULL_RESPONSE,
+                        onClick = { selectedTab = RecipeTab.FULL_RESPONSE },
+                        text = { Text("Full Response") }
                     )
                 }
 
@@ -153,6 +158,9 @@ fun RecipeScreen(onBack: () -> Unit) {
                         }
                         RecipeTab.RAW_JSON -> {
                             JsonView(data.rawJson)
+                        }
+                        RecipeTab.FULL_RESPONSE -> {
+                            JsonView(data.fullResponseJson)
                         }
                     }
                 }

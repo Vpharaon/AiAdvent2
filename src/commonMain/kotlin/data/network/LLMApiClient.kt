@@ -19,7 +19,7 @@ import java.net.UnknownHostException
 class LLMApiClient(
     private val apiKey: String,
     private val apiUrl: String = "https://api.z.ai/api/paas/v4/chat/completions",
-    private val model: String = "glm-4.5-flash"
+    private val model: String = "glm-4.5-air"
 ) : LLMApi {
     private val client = HttpClient {
         install(ContentNegotiation) {

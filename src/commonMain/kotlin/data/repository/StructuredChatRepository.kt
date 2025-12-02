@@ -2,11 +2,14 @@ package data.repository
 
 import data.network.LLMApi
 import data.network.model.ChatMessage
+import data.network.model.ChatResponse
 import data.network.model.MessageRole
 import data.parser.StructuredResponseParser
 import data.prompt.StructuredPromptBuilder
 import domain.structured.RecipeResponse
 import domain.structured.RecipeWithRaw
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * Репозиторий для работы со структурированными запросами к LLM
@@ -17,6 +20,11 @@ class StructuredChatRepository(
 ) {
     private val promptBuilder = StructuredPromptBuilder()
     private val parser = StructuredResponseParser()
+
+    private val json = Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+    }
 
     /**
      * Получает структурированный рецепт блюда от шеф-повара
@@ -91,7 +99,13 @@ class StructuredChatRepository(
             onSuccess = { chatResponse ->
                 val content = chatResponse.choices?.firstOrNull()?.message?.content
                 if (content != null) {
-                    parser.parseRecipeWithRaw(content)
+                    // Сериализуем полный ответ от API
+                    val fullResponseJson = json.encodeToString<ChatResponse>(chatResponse)
+
+                    // Парсим рецепт и добавляем полный ответ
+                    parser.parseRecipeWithRaw(content).map { recipeWithRaw ->
+                        recipeWithRaw.copy(fullResponseJson = fullResponseJson)
+                    }
                 } else {
                     Result.failure(IllegalStateException("Empty response from LLM"))
                 }

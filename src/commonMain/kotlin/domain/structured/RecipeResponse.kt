@@ -29,5 +29,6 @@ data class Ingredient(
  */
 data class RecipeWithRaw(
     val recipe: RecipeResponse,
-    val rawJson: String
+    val rawJson: String,
+    val fullResponseJson: String
 )
