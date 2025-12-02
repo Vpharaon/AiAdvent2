@@ -16,6 +16,7 @@ import kotlinx.coroutines.SupervisorJob
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import ui.screens.ChatScreen
+import ui.screens.RecipeScreen
 import ui.screens.SettingsScreen
 import java.io.File
 import java.io.FileInputStream
@@ -64,6 +65,7 @@ fun App() {
     val settings by settingsRepository.settings.collectAsState()
     val systemInDarkTheme = isSystemInDarkTheme()
     var showSettings by remember { mutableStateOf(false) }
+    var showRecipes by remember { mutableStateOf(false) }
 
     val useDarkTheme = when (settings.theme) {
         Theme.LIGHT -> false
@@ -74,14 +76,23 @@ fun App() {
     val colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme()
 
     MaterialTheme(colorScheme = colorScheme) {
-        if (showSettings) {
-            SettingsScreen(
-                onBack = { showSettings = false }
-            )
-        } else {
-            ChatScreen(
-                onOpenSettings = { showSettings = true }
-            )
+        when {
+            showSettings -> {
+                SettingsScreen(
+                    onBack = { showSettings = false }
+                )
+            }
+            showRecipes -> {
+                RecipeScreen(
+                    onBack = { showRecipes = false }
+                )
+            }
+            else -> {
+                ChatScreen(
+                    onOpenSettings = { showSettings = true },
+                    onOpenRecipes = { showRecipes = true }
+                )
+            }
         }
     }
 }

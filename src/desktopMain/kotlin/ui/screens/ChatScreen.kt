@@ -15,7 +15,10 @@ import ui.components.MessagesArea
 import viewmodel.ChatViewModel
 
 @Composable
-fun ChatScreen(onOpenSettings: () -> Unit) {
+fun ChatScreen(
+    onOpenSettings: () -> Unit,
+    onOpenRecipes: () -> Unit
+) {
     val viewModel: ChatViewModel = koinInject()
     val messages by viewModel.messages.collectAsState()
     val input by viewModel.input.collectAsState()
@@ -27,7 +30,7 @@ fun ChatScreen(onOpenSettings: () -> Unit) {
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        // Заголовок с кнопкой настроек
+        // Заголовок с кнопками
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -38,8 +41,13 @@ fun ChatScreen(onOpenSettings: () -> Unit) {
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            IconButton(onClick = onOpenSettings) {
-                Text("⚙️", style = MaterialTheme.typography.titleLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IconButton(onClick = onOpenRecipes) {
+                    Text("👨‍🍳", style = MaterialTheme.typography.titleLarge)
+                }
+                IconButton(onClick = onOpenSettings) {
+                    Text("⚙️", style = MaterialTheme.typography.titleLarge)
+                }
             }
         }
 
