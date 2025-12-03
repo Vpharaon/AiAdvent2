@@ -8,6 +8,7 @@ import data.repository.ChatRepository
 import data.repository.SettingsRepository
 import data.repository.StructuredChatRepository
 import viewmodel.ChatViewModel
+import viewmodel.EventPlannerViewModel
 
 fun appModule(apiKey: String, coroutineScope: CoroutineScope) = module {
     // Settings Repository
@@ -35,6 +36,14 @@ fun appModule(apiKey: String, coroutineScope: CoroutineScope) = module {
     // Chat ViewModel
     single {
         ChatViewModel(
+            repository = get(),
+            coroutineScope = coroutineScope
+        )
+    }
+
+    // Event Planner ViewModel
+    single {
+        EventPlannerViewModel(
             repository = get(),
             coroutineScope = coroutineScope
         )

@@ -111,4 +111,43 @@ class ChatRepository(
     fun clearMessages() {
         _messages.value = emptyList()
     }
+
+    /**
+     * Добавляет сообщение пользователя в список сообщений (без отправки в API)
+     */
+    fun addUserMessage(content: String) {
+        val userMessage = Message(
+            id = System.currentTimeMillis().toString(),
+            content = content,
+            role = MessageRole.USER.value,
+            timestamp = System.currentTimeMillis()
+        )
+        _messages.value += userMessage
+    }
+
+    /**
+     * Добавляет сообщение ассистента в список сообщений (без отправки в API)
+     */
+    fun addAssistantMessage(content: String) {
+        val assistantMessage = Message(
+            id = System.currentTimeMillis().toString(),
+            content = content,
+            role = MessageRole.ASSISTANT.value,
+            timestamp = System.currentTimeMillis()
+        )
+        _messages.value += assistantMessage
+    }
+
+    /**
+     * Отправляет сообщение с заданной историей диалога
+     * Возвращает сырой ответ от API для дальнейшей обработки
+     */
+    suspend fun sendMessageWithHistory(history: List<ChatMessage>): Result<data.network.model.ChatResponse> {
+        val settings = settingsRepository.getCurrentSettings()
+        return llmApiClient.sendMessage(
+            messages = history,
+            temperature = settings.temperature,
+            maxTokens = settings.maxTokens
+        )
+    }
 }

@@ -16,8 +16,8 @@ import viewmodel.ChatViewModel
 
 @Composable
 fun ChatScreen(
-    onOpenSettings: () -> Unit,
-    onOpenRecipes: () -> Unit
+    onBack: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     val viewModel: ChatViewModel = koinInject()
     val messages by viewModel.messages.collectAsState()
@@ -36,18 +36,21 @@ fun ChatScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "LLM Chat",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                IconButton(onClick = onOpenRecipes) {
-                    Text("👨‍🍳", style = MaterialTheme.typography.titleLarge)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(onClick = onBack) {
+                    Text("←", style = MaterialTheme.typography.titleLarge)
                 }
-                IconButton(onClick = onOpenSettings) {
-                    Text("⚙️", style = MaterialTheme.typography.titleLarge)
-                }
+                Text(
+                    text = "AI Чат",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            IconButton(onClick = onOpenSettings) {
+                Text("⚙️", style = MaterialTheme.typography.titleLarge)
             }
         }
 

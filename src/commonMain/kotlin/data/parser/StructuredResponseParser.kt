@@ -2,6 +2,8 @@ package data.parser
 
 import domain.structured.RecipeResponse
 import domain.structured.RecipeWithRaw
+import domain.structured.EventPlanResponse
+import domain.structured.EventPlanWithRaw
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 
@@ -66,6 +68,38 @@ class StructuredResponseParser {
             )
         } catch (e: Exception) {
             Result.failure(IllegalArgumentException("Failed to parse recipe: ${e.message}", e))
+        }
+    }
+
+    /**
+     * Парсит план корпоратива от менеджера ресторана
+     */
+    fun parseEventPlan(response: String): Result<EventPlanResponse> {
+        return try {
+            val cleaned = cleanJsonResponse(response)
+            val result = json.decodeFromString<EventPlanResponse>(cleaned)
+            Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(IllegalArgumentException("Failed to parse event plan: ${e.message}", e))
+        }
+    }
+
+    /**
+     * Парсит план корпоратива с сохранением raw JSON для отладки
+     */
+    fun parseEventPlanWithRaw(rawResponse: String): Result<EventPlanWithRaw> {
+        return try {
+            val cleaned = cleanJsonResponse(rawResponse)
+            val eventPlan = json.decodeFromString<EventPlanResponse>(cleaned)
+            Result.success(
+                EventPlanWithRaw(
+                    eventPlan = eventPlan,
+                    rawJson = rawResponse,
+                    fullResponseJson = "" // Будет заполнено в repository
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(IllegalArgumentException("Failed to parse event plan: ${e.message}", e))
         }
     }
 }

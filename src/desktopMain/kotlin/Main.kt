@@ -15,8 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
+import ui.screens.HomeScreen
 import ui.screens.ChatScreen
 import ui.screens.RecipeScreen
+import ui.screens.EventPlanScreen
 import ui.screens.SettingsScreen
 import java.io.File
 import java.io.FileInputStream
@@ -66,6 +68,8 @@ fun App() {
     val systemInDarkTheme = isSystemInDarkTheme()
     var showSettings by remember { mutableStateOf(false) }
     var showRecipes by remember { mutableStateOf(false) }
+    var showEventPlanner by remember { mutableStateOf(false) }
+    var showChat by remember { mutableStateOf(false) }
 
     val useDarkTheme = when (settings.theme) {
         Theme.LIGHT -> false
@@ -87,10 +91,22 @@ fun App() {
                     onBack = { showRecipes = false }
                 )
             }
-            else -> {
+            showEventPlanner -> {
+                EventPlanScreen(
+                    onBack = { showEventPlanner = false }
+                )
+            }
+            showChat -> {
                 ChatScreen(
-                    onOpenSettings = { showSettings = true },
-                    onOpenRecipes = { showRecipes = true }
+                    onBack = { showChat = false },
+                    onOpenSettings = { showSettings = true }
+                )
+            }
+            else -> {
+                HomeScreen(
+                    onOpenEventPlanner = { showEventPlanner = true },
+                    onOpenRecipes = { showRecipes = true },
+                    onOpenChat = { showChat = true }
                 )
             }
         }
