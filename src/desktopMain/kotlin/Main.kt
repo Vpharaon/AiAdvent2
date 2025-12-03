@@ -48,8 +48,8 @@ fun main() = application {
 
     Window(
         onCloseRequest = ::exitApplication,
-        title = "LLM Chat",
-        state = rememberWindowState(width = 800.dp, height = 600.dp)
+        title = "AI Advent",
+        state = rememberWindowState(width = 1200.dp, height = 800.dp)
     ) {
         KoinApplication(
             application = {

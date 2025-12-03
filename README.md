@@ -1,6 +1,6 @@
-# LLM Chat - Desktop приложение
+# AI Advent - Desktop приложение
 
-Desktop-приложение для общения с LLM (Large Language Model) на базе Kotlin Multiplatform и Compose Desktop.
+Desktop-приложение для демонстрации возможностей AI с использованием LLM (Large Language Model) на базе Kotlin Multiplatform и Compose Desktop.
 
 ## Особенности
 
