@@ -7,6 +7,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.arkivanov.decompose.DefaultComponentContext
+import com.arkivanov.decompose.extensions.compose.stack.Children
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
+import component.*
 import data.repository.SettingsRepository
 import di.appModule
 import domain.Theme
@@ -15,11 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
-import ui.screens.HomeScreen
-import ui.screens.ChatScreen
-import ui.screens.RecipeScreen
-import ui.screens.EventPlanScreen
-import ui.screens.SettingsScreen
+import ui.screens.*
 import java.io.File
 import java.io.FileInputStream
 import java.util.Properties
@@ -45,6 +47,7 @@ fun main() = application {
         )
 
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val lifecycle = LifecycleRegistry()
 
     Window(
         onCloseRequest = ::exitApplication,
@@ -56,20 +59,30 @@ fun main() = application {
                 modules(appModule(apiKey, appScope))
             }
         ) {
-            App()
+            val chatRepository = koinInject<data.repository.ChatRepository>()
+            val structuredChatRepository = koinInject<data.repository.StructuredChatRepository>()
+            val settingsRepository = koinInject<SettingsRepository>()
+
+            val rootComponent = remember {
+                DefaultRootComponent(
+                    componentContext = DefaultComponentContext(lifecycle = lifecycle),
+                    storeFactory = DefaultStoreFactory(),
+                    chatRepository = chatRepository,
+                    structuredChatRepository = structuredChatRepository,
+                    settingsRepository = settingsRepository
+                )
+            }
+
+            App(rootComponent)
         }
     }
 }
 
 @Composable
-fun App() {
+fun App(rootComponent: RootComponent) {
     val settingsRepository: SettingsRepository = koinInject()
     val settings by settingsRepository.settings.collectAsState()
     val systemInDarkTheme = isSystemInDarkTheme()
-    var showSettings by remember { mutableStateOf(false) }
-    var showRecipes by remember { mutableStateOf(false) }
-    var showEventPlanner by remember { mutableStateOf(false) }
-    var showChat by remember { mutableStateOf(false) }
 
     val useDarkTheme = when (settings.theme) {
         Theme.LIGHT -> false
@@ -80,34 +93,17 @@ fun App() {
     val colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme()
 
     MaterialTheme(colorScheme = colorScheme) {
-        when {
-            showSettings -> {
-                SettingsScreen(
-                    onBack = { showSettings = false }
-                )
-            }
-            showRecipes -> {
-                RecipeScreen(
-                    onBack = { showRecipes = false }
-                )
-            }
-            showEventPlanner -> {
-                EventPlanScreen(
-                    onBack = { showEventPlanner = false }
-                )
-            }
-            showChat -> {
-                ChatScreen(
-                    onBack = { showChat = false },
-                    onOpenSettings = { showSettings = true }
-                )
-            }
-            else -> {
-                HomeScreen(
-                    onOpenEventPlanner = { showEventPlanner = true },
-                    onOpenRecipes = { showRecipes = true },
-                    onOpenChat = { showChat = true }
-                )
+        val stack by rootComponent.stack.subscribeAsState()
+
+        Children(
+            stack = stack
+        ) {
+            when (val child = it.instance) {
+                is RootComponent.Child.Home -> HomeScreen(child.component)
+                is RootComponent.Child.Chat -> ChatScreen(child.component)
+                is RootComponent.Child.Recipe -> RecipeScreen(child.component)
+                is RootComponent.Child.EventPlanner -> EventPlanScreen(child.component)
+                is RootComponent.Child.Settings -> SettingsScreen(child.component)
             }
         }
     }

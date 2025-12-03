@@ -10,26 +10,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import data.repository.StructuredChatRepository
 import domain.structured.RecipeResponse
-import domain.structured.RecipeWithRaw
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
-
-enum class RecipeTab {
-    FORMATTED, RAW_JSON, FULL_RESPONSE
-}
 
 @Composable
-fun RecipeScreen(onBack: () -> Unit) {
-    val repository: StructuredChatRepository = koinInject()
-    val scope = rememberCoroutineScope()
-
-    var dishName by remember { mutableStateOf("") }
-    var recipeData by remember { mutableStateOf<RecipeWithRaw?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var selectedTab by remember { mutableStateOf(RecipeTab.FORMATTED) }
+fun RecipeScreen(component: component.RecipeComponent) {
+    val state by component.state.collectAsState()
+    val dishName = state.dishName
+    val recipeData = state.recipeData
+    val isLoading = state.isLoading
+    val errorMessage = state.errorMessage
+    val selectedTab = state.selectedTab
 
     Column(
         modifier = Modifier
@@ -48,7 +38,7 @@ fun RecipeScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            IconButton(onClick = onBack) {
+            IconButton(onClick = component::onBackClick) {
                 Text("←", style = MaterialTheme.typography.titleLarge)
             }
         }
@@ -56,7 +46,7 @@ fun RecipeScreen(onBack: () -> Unit) {
         // Поле ввода
         OutlinedTextField(
             value = dishName,
-            onValueChange = { dishName = it },
+            onValueChange = component::onDishNameChange,
             label = { Text("Название блюда") },
             placeholder = { Text("Например: Борщ, Тирамису, Карбонара...") },
             modifier = Modifier.fillMaxWidth(),
@@ -67,25 +57,7 @@ fun RecipeScreen(onBack: () -> Unit) {
 
         // Кнопка получения рецепта
         Button(
-            onClick = {
-                if (dishName.isNotBlank()) {
-                    isLoading = true
-                    errorMessage = null
-                    recipeData = null
-
-                    scope.launch {
-                        val result = repository.getRecipeWithRaw(dishName)
-                        isLoading = false
-
-                        result.onSuccess { data ->
-                            recipeData = data
-                            selectedTab = RecipeTab.FORMATTED
-                        }.onFailure { error ->
-                            errorMessage = "Ошибка: ${error.message}"
-                        }
-                    }
-                }
-            },
+            onClick = component::onGetRecipeClick,
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading && dishName.isNotBlank()
         ) {
@@ -127,18 +99,18 @@ fun RecipeScreen(onBack: () -> Unit) {
                 // Табы
                 TabRow(selectedTabIndex = selectedTab.ordinal) {
                     Tab(
-                        selected = selectedTab == RecipeTab.FORMATTED,
-                        onClick = { selectedTab = RecipeTab.FORMATTED },
+                        selected = selectedTab == mvi.recipe.RecipeStore.RecipeTab.FORMATTED,
+                        onClick = { component.onTabSelect(mvi.recipe.RecipeStore.RecipeTab.FORMATTED) },
                         text = { Text("Рецепт") }
                     )
                     Tab(
-                        selected = selectedTab == RecipeTab.RAW_JSON,
-                        onClick = { selectedTab = RecipeTab.RAW_JSON },
+                        selected = selectedTab == mvi.recipe.RecipeStore.RecipeTab.RAW_JSON,
+                        onClick = { component.onTabSelect(mvi.recipe.RecipeStore.RecipeTab.RAW_JSON) },
                         text = { Text("Content JSON") }
                     )
                     Tab(
-                        selected = selectedTab == RecipeTab.FULL_RESPONSE,
-                        onClick = { selectedTab = RecipeTab.FULL_RESPONSE },
+                        selected = selectedTab == mvi.recipe.RecipeStore.RecipeTab.FULL_RESPONSE,
+                        onClick = { component.onTabSelect(mvi.recipe.RecipeStore.RecipeTab.FULL_RESPONSE) },
                         text = { Text("Full Response") }
                     )
                 }
@@ -153,13 +125,13 @@ fun RecipeScreen(onBack: () -> Unit) {
                     )
                 ) {
                     when (selectedTab) {
-                        RecipeTab.FORMATTED -> {
+                        mvi.recipe.RecipeStore.RecipeTab.FORMATTED -> {
                             FormattedRecipeView(data.recipe)
                         }
-                        RecipeTab.RAW_JSON -> {
+                        mvi.recipe.RecipeStore.RecipeTab.RAW_JSON -> {
                             JsonView(data.rawJson)
                         }
-                        RecipeTab.FULL_RESPONSE -> {
+                        mvi.recipe.RecipeStore.RecipeTab.FULL_RESPONSE -> {
                             JsonView(data.fullResponseJson)
                         }
                     }

@@ -9,20 +9,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.koin.compose.koinInject
 import ui.components.InputArea
 import ui.components.MessagesArea
-import viewmodel.ChatViewModel
 
 @Composable
-fun ChatScreen(
-    onBack: () -> Unit,
-    onOpenSettings: () -> Unit
-) {
-    val viewModel: ChatViewModel = koinInject()
-    val messages by viewModel.messages.collectAsState()
-    val input by viewModel.input.collectAsState()
-    val isTyping by viewModel.isTyping.collectAsState()
+fun ChatScreen(component: component.ChatComponent) {
+    val state by component.state.collectAsState()
+    val messages = state.messages
+    val input = state.input
+    val isTyping = state.isTyping
 
     Column(
         modifier = Modifier
@@ -40,7 +35,7 @@ fun ChatScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                IconButton(onClick = onBack) {
+                IconButton(onClick = component::onBackClick) {
                     Text("←", style = MaterialTheme.typography.titleLarge)
                 }
                 Text(
@@ -49,7 +44,7 @@ fun ChatScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
             }
-            IconButton(onClick = onOpenSettings) {
+            IconButton(onClick = component::onSettingsClick) {
                 Text("⚙️", style = MaterialTheme.typography.titleLarge)
             }
         }
@@ -68,9 +63,9 @@ fun ChatScreen(
         // Область ввода и кнопок
         InputArea(
             input = input,
-            onInputChange = { viewModel.updateInput(it) },
-            onSendClick = { viewModel.sendMessage() },
-            onClearClick = { viewModel.clearChat() }
+            onInputChange = component::onInputChange,
+            onSendClick = component::onSendClick,
+            onClearClick = component::onClearClick
         )
     }
 }

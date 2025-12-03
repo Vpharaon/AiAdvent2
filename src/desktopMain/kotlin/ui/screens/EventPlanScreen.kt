@@ -10,34 +10,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import domain.structured.EventPlanResponse
-import domain.structured.EventPlanWithRaw
-import org.koin.compose.koinInject
 import ui.components.InputArea
 import ui.components.MessagesArea
-import viewmodel.EventPlannerViewModel
-
-enum class EventPlanTab {
-    CHAT, FORMATTED, RAW_JSON, FULL_RESPONSE
-}
 
 @Composable
-fun EventPlanScreen(onBack: () -> Unit) {
-    val viewModel: EventPlannerViewModel = koinInject()
-
-    val messages by viewModel.messages.collectAsState()
-    val input by viewModel.input.collectAsState()
-    val isTyping by viewModel.isTyping.collectAsState()
-    val eventPlan by viewModel.eventPlan.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-
-    var selectedTab by remember { mutableStateOf(EventPlanTab.CHAT) }
-
-    // Автоматически переключаемся на вкладку с планом, когда он получен
-    LaunchedEffect(eventPlan) {
-        if (eventPlan != null && selectedTab == EventPlanTab.CHAT) {
-            selectedTab = EventPlanTab.FORMATTED
-        }
-    }
+fun EventPlanScreen(component: component.EventPlannerComponent) {
+    val state by component.state.collectAsState()
+    val messages = state.messages
+    val input = state.input
+    val isTyping = state.isTyping
+    val eventPlan = state.eventPlan
+    val errorMessage = state.errorMessage
+    val selectedTab = state.selectedTab
 
     Column(
         modifier = Modifier
@@ -56,7 +40,7 @@ fun EventPlanScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            IconButton(onClick = onBack) {
+            IconButton(onClick = component::onBackClick) {
                 Text("←", style = MaterialTheme.typography.titleLarge)
             }
         }
@@ -96,23 +80,23 @@ fun EventPlanScreen(onBack: () -> Unit) {
         if (eventPlan != null) {
             TabRow(selectedTabIndex = selectedTab.ordinal) {
                 Tab(
-                    selected = selectedTab == EventPlanTab.CHAT,
-                    onClick = { selectedTab = EventPlanTab.CHAT },
+                    selected = selectedTab == mvi.eventplanner.EventPlannerStore.EventPlanTab.CHAT,
+                    onClick = { component.onTabSelect(mvi.eventplanner.EventPlannerStore.EventPlanTab.CHAT) },
                     text = { Text("Диалог") }
                 )
                 Tab(
-                    selected = selectedTab == EventPlanTab.FORMATTED,
-                    onClick = { selectedTab = EventPlanTab.FORMATTED },
+                    selected = selectedTab == mvi.eventplanner.EventPlannerStore.EventPlanTab.PLAN,
+                    onClick = { component.onTabSelect(mvi.eventplanner.EventPlannerStore.EventPlanTab.PLAN) },
                     text = { Text("План") }
                 )
                 Tab(
-                    selected = selectedTab == EventPlanTab.RAW_JSON,
-                    onClick = { selectedTab = EventPlanTab.RAW_JSON },
+                    selected = selectedTab == mvi.eventplanner.EventPlannerStore.EventPlanTab.RAW_JSON,
+                    onClick = { component.onTabSelect(mvi.eventplanner.EventPlannerStore.EventPlanTab.RAW_JSON) },
                     text = { Text("Content JSON") }
                 )
                 Tab(
-                    selected = selectedTab == EventPlanTab.FULL_RESPONSE,
-                    onClick = { selectedTab = EventPlanTab.FULL_RESPONSE },
+                    selected = selectedTab == mvi.eventplanner.EventPlannerStore.EventPlanTab.FULL_RESPONSE,
+                    onClick = { component.onTabSelect(mvi.eventplanner.EventPlannerStore.EventPlanTab.FULL_RESPONSE) },
                     text = { Text("Full Response") }
                 )
             }
@@ -122,7 +106,7 @@ fun EventPlanScreen(onBack: () -> Unit) {
 
         // Контент вкладок
         when (selectedTab) {
-            EventPlanTab.CHAT -> {
+            mvi.eventplanner.EventPlannerStore.EventPlanTab.CHAT -> {
                 // Область сообщений
                 MessagesArea(
                     messages = messages,
@@ -137,12 +121,12 @@ fun EventPlanScreen(onBack: () -> Unit) {
                 // Область ввода
                 InputArea(
                     input = input,
-                    onInputChange = { viewModel.updateInput(it) },
-                    onSendClick = { viewModel.sendMessage() },
-                    onClearClick = { viewModel.clearChat() }
+                    onInputChange = component::onInputChange,
+                    onSendClick = component::onSendClick,
+                    onClearClick = component::onClearClick
                 )
             }
-            EventPlanTab.FORMATTED -> {
+            mvi.eventplanner.EventPlannerStore.EventPlanTab.PLAN -> {
                 eventPlan?.let { plan ->
                     Card(
                         modifier = Modifier
@@ -156,7 +140,7 @@ fun EventPlanScreen(onBack: () -> Unit) {
                     }
                 }
             }
-            EventPlanTab.RAW_JSON -> {
+            mvi.eventplanner.EventPlannerStore.EventPlanTab.RAW_JSON -> {
                 eventPlan?.let { plan ->
                     Card(
                         modifier = Modifier
@@ -170,7 +154,7 @@ fun EventPlanScreen(onBack: () -> Unit) {
                     }
                 }
             }
-            EventPlanTab.FULL_RESPONSE -> {
+            mvi.eventplanner.EventPlannerStore.EventPlanTab.FULL_RESPONSE -> {
                 eventPlan?.let { plan ->
                     Card(
                         modifier = Modifier

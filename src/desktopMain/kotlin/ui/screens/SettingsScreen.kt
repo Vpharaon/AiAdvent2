@@ -9,14 +9,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import data.repository.SettingsRepository
 import domain.Theme
-import org.koin.compose.koinInject
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
-    val settingsRepository: SettingsRepository = koinInject()
-    val settings by settingsRepository.settings.collectAsState()
+fun SettingsScreen(component: component.SettingsComponent) {
+    val state by component.state.collectAsState()
+    val settings = state.settings
 
     Column(
         modifier = Modifier
@@ -35,7 +33,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            IconButton(onClick = onBack) {
+            IconButton(onClick = component::onBackClick) {
                 Text("←", style = MaterialTheme.typography.titleLarge)
             }
         }
@@ -60,17 +58,17 @@ fun SettingsScreen(onBack: () -> Unit) {
                 ) {
                     FilterChip(
                         selected = settings.theme == Theme.LIGHT,
-                        onClick = { settingsRepository.updateTheme(Theme.LIGHT) },
+                        onClick = { component.onThemeChange(Theme.LIGHT) },
                         label = { Text("Светлая") }
                     )
                     FilterChip(
                         selected = settings.theme == Theme.DARK,
-                        onClick = { settingsRepository.updateTheme(Theme.DARK) },
+                        onClick = { component.onThemeChange(Theme.DARK) },
                         label = { Text("Тёмная") }
                     )
                     FilterChip(
                         selected = settings.theme == Theme.SYSTEM,
-                        onClick = { settingsRepository.updateTheme(Theme.SYSTEM) },
+                        onClick = { component.onThemeChange(Theme.SYSTEM) },
                         label = { Text("Системная") }
                     )
                 }
@@ -85,7 +83,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 )
                 Slider(
                     value = settings.temperature.toFloat(),
-                    onValueChange = { settingsRepository.updateTemperature(it.toDouble()) },
+                    onValueChange = { component.onTemperatureChange(it.toDouble()) },
                     valueRange = 0f..2f,
                     steps = 19
                 )
@@ -107,7 +105,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                     value = settings.maxTokens?.toString() ?: "",
                     onValueChange = { value ->
                         val tokens = value.toIntOrNull()
-                        settingsRepository.updateMaxTokens(tokens)
+                        component.onMaxTokensChange(tokens)
                     },
                     placeholder = { Text("По умолчанию (без ограничений)") },
                     modifier = Modifier.fillMaxWidth()
@@ -122,7 +120,7 @@ fun SettingsScreen(onBack: () -> Unit) {
 
                 // Кнопка сброса
                 Button(
-                    onClick = { settingsRepository.resetToDefaults() },
+                    onClick = component::onResetClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Сбросить настройки")

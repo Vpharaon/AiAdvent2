@@ -29,6 +29,16 @@ kotlin {
                 implementation("io.ktor:ktor-client-logging:3.0.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
                 implementation("io.insert-koin:koin-core:4.0.0")
+
+                // MVIKotlin
+                implementation("com.arkivanov.mvikotlin:mvikotlin:4.0.0")
+                implementation("com.arkivanov.mvikotlin:mvikotlin-main:4.0.0")
+                implementation("com.arkivanov.mvikotlin:mvikotlin-extensions-coroutines:4.0.0")
+
+                // Decompose
+                implementation("com.arkivanov.decompose:decompose:3.0.0")
+                implementation("com.arkivanov.decompose:extensions-compose:3.0.0")
+                implementation("com.arkivanov.essenty:lifecycle:2.0.0")
             }
         }
         val commonTest by getting {

@@ -23,11 +23,7 @@ data class HomeScreenItem(
 )
 
 @Composable
-fun HomeScreen(
-    onOpenEventPlanner: () -> Unit,
-    onOpenRecipes: () -> Unit,
-    onOpenChat: () -> Unit
-) {
+fun HomeScreen(component: component.HomeComponent) {
     val items = listOf(
         HomeScreenItem(
             icon = "🎉",
@@ -35,7 +31,7 @@ fun HomeScreen(
             description = "Организация корпоратива",
             containerColor = { MaterialTheme.colorScheme.primaryContainer },
             contentColor = { MaterialTheme.colorScheme.onPrimaryContainer },
-            onClick = onOpenEventPlanner
+            onClick = component::onEventPlannerClick
         ),
         HomeScreenItem(
             icon = "👨‍🍳",
@@ -43,7 +39,7 @@ fun HomeScreen(
             description = "Получить рецепт блюда",
             containerColor = { MaterialTheme.colorScheme.secondaryContainer },
             contentColor = { MaterialTheme.colorScheme.onSecondaryContainer },
-            onClick = onOpenRecipes
+            onClick = component::onRecipesClick
         ),
         HomeScreenItem(
             icon = "💬",
@@ -51,7 +47,7 @@ fun HomeScreen(
             description = "Общение с AI ассистентом",
             containerColor = { MaterialTheme.colorScheme.tertiaryContainer },
             contentColor = { MaterialTheme.colorScheme.onTertiaryContainer },
-            onClick = onOpenChat
+            onClick = component::onChatClick
         )
     )
 
