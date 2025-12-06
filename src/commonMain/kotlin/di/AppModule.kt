@@ -5,6 +5,7 @@ import data.network.LLMApi
 import data.network.LLMApiClient
 import org.koin.dsl.module
 import data.repository.ChatRepository
+import data.repository.ChatRepositoryImpl
 import data.repository.SettingsRepository
 import data.repository.StructuredChatRepository
 
@@ -16,8 +17,8 @@ fun appModule(apiKey: String, coroutineScope: CoroutineScope) = module {
     single<LLMApi> { LLMApiClient(apiKey = apiKey) }
 
     // Chat Repository
-    single {
-        ChatRepository(
+    single<ChatRepository> {
+        ChatRepositoryImpl(
             llmApiClient = get(),
             settingsRepository = get()
         )

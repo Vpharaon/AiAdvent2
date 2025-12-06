@@ -1,12 +1,12 @@
 package mvi.settings
 
 import com.arkivanov.mvikotlin.core.store.Reducer
+import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import data.repository.SettingsRepository
 import domain.AppSettings
-import domain.Theme
 import kotlinx.coroutines.launch
 
 internal class SettingsStoreFactory(
@@ -14,24 +14,38 @@ internal class SettingsStoreFactory(
     private val settingsRepository: SettingsRepository
 ) {
 
+    private sealed interface Action {
+        data object InitAction : Action
+    }
+
     fun create(): SettingsStore =
         object : SettingsStore, Store<SettingsStore.Intent, SettingsStore.State, Nothing> by storeFactory.create(
             name = "SettingsStore",
             initialState = SettingsStore.State(),
             executorFactory = ::ExecutorImpl,
-            reducer = ReducerImpl
+            reducer = ReducerImpl,
+            bootstrapper = SimpleBootstrapper(
+                Action.InitAction
+            )
         ) {}
 
     private sealed interface Message {
         data class SettingsUpdated(val settings: AppSettings) : Message
     }
 
-    private inner class ExecutorImpl : CoroutineExecutor<SettingsStore.Intent, Nothing, SettingsStore.State, Message, Nothing>() {
-        init {
-            // Подписка на изменения настроек
-            scope.launch {
-                settingsRepository.settings.collect { settings ->
-                    dispatch(Message.SettingsUpdated(settings))
+    private inner class ExecutorImpl :
+        CoroutineExecutor<SettingsStore.Intent, Action, SettingsStore.State, Message, Nothing>() {
+
+        override fun executeAction(action: Action) {
+            super.executeAction(action)
+            when (action) {
+                Action.InitAction -> {
+                    // Подписка на изменения настроек
+                    scope.launch {
+                        settingsRepository.settings.collect { settings ->
+                            dispatch(Message.SettingsUpdated(settings))
+                        }
+                    }
                 }
             }
         }

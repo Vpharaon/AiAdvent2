@@ -30,7 +30,7 @@ fun TypingIndicator() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Bot is typing",
+                    text = "Агент печатает",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )

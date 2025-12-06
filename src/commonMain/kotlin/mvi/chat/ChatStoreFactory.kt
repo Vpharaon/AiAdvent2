@@ -6,15 +6,17 @@ import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import data.repository.ChatRepository
+import data.repository.SettingsRepository
 import kotlinx.coroutines.launch
+import mvi.chat.ChatStoreFactory.Message.*
 
 internal class ChatStoreFactory(
     private val storeFactory: StoreFactory,
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
 ) {
 
     sealed interface Action {
-        data object InitAction: Action
+        data object InitAction : Action
     }
 
     fun create(): ChatStore =
@@ -32,6 +34,8 @@ internal class ChatStoreFactory(
         data class MessagesUpdated(val messages: List<domain.Message>) : Message
         data class InputUpdated(val text: String) : Message
         data class TypingUpdated(val isTyping: Boolean) : Message
+        data class SystemPromptUpdated(val systemPrompt: String) : Message
+        data class SystemPromptExpandedUpdated(val isExpanded: Boolean) : Message
     }
 
     private inner class ExecutorImpl :
@@ -44,17 +48,17 @@ internal class ChatStoreFactory(
                 Action.InitAction -> {
                     // Подписка на изменения сообщений
                     scope.launch {
-                        chatRepository.messages.collect { messages ->
+                        chatRepository.messagesFlow().collect { messages ->
                             dispatch(Message.MessagesUpdated(messages))
                         }
                     }
 
-                    // Отправляем приветственное сообщение
-                    scope.launch {
+                    // Подписка на изменения настроек для system prompt
+                    /*scope.launch {
                         dispatch(Message.TypingUpdated(true))
                         chatRepository.sendWelcomeMessage()
                         dispatch(Message.TypingUpdated(false))
-                    }
+                    }*/
                 }
             }
         }
@@ -63,7 +67,7 @@ internal class ChatStoreFactory(
             when (intent) {
                 is ChatStore.Intent.UpdateInput -> {
                     if (intent.text.length <= MAX_MESSAGE_LENGTH) {
-                        dispatch(Message.InputUpdated(intent.text))
+                        dispatch(InputUpdated(intent.text))
                     }
                 }
 
@@ -72,24 +76,44 @@ internal class ChatStoreFactory(
                     if (messageText.isEmpty()) return
 
                     // Очищаем поле ввода
-                    dispatch(Message.InputUpdated(""))
+                    dispatch(InputUpdated(""))
 
                     scope.launch {
-                        dispatch(Message.TypingUpdated(true))
-                        chatRepository.sendUserText(messageText)
-                        dispatch(Message.TypingUpdated(false))
+                        dispatch(TypingUpdated(true))
+                        chatRepository.sendUserMessageWithHistory(messageText)
+                        dispatch(TypingUpdated(false))
                     }
                 }
 
                 is ChatStore.Intent.ClearChat -> {
                     chatRepository.clearMessages()
-                    dispatch(Message.InputUpdated(""))
+                    dispatch(InputUpdated(""))
 
                     scope.launch {
-                        dispatch(Message.TypingUpdated(true))
-                        chatRepository.sendWelcomeMessage()
-                        dispatch(Message.TypingUpdated(false))
+                        dispatch(TypingUpdated(true))
+                        chatRepository.sendSystemPromptWithHistory(state().systemPrompt)
+                        dispatch(TypingUpdated(false))
                     }
+                }
+
+                ChatStore.Intent.SaveSystemPrompt -> {
+                    scope.launch {
+                        dispatch(TypingUpdated(true))
+                        chatRepository.sendSystemPromptWithHistory(state().systemPrompt)
+                        dispatch(TypingUpdated(false))
+                    }
+                }
+
+                is ChatStore.Intent.UpdateSystemPrompt -> {
+                    dispatch(
+                        message = SystemPromptUpdated(systemPrompt = intent.systemPrompt)
+                    )
+                }
+
+                ChatStore.Intent.ToggleSystemPromptEditor -> {
+                    dispatch(
+                        message = SystemPromptExpandedUpdated(isExpanded = !state().isSystemPromptExpanded)
+                    )
                 }
             }
         }
@@ -98,9 +122,11 @@ internal class ChatStoreFactory(
     private object ReducerImpl : Reducer<ChatStore.State, Message> {
         override fun ChatStore.State.reduce(msg: Message): ChatStore.State =
             when (msg) {
-                is Message.MessagesUpdated -> copy(messages = msg.messages)
-                is Message.InputUpdated -> copy(input = msg.text)
-                is Message.TypingUpdated -> copy(isTyping = msg.isTyping)
+                is MessagesUpdated -> copy(messages = msg.messages)
+                is InputUpdated -> copy(input = msg.text)
+                is TypingUpdated -> copy(isTyping = msg.isTyping)
+                is SystemPromptUpdated -> copy(systemPrompt = msg.systemPrompt)
+                is SystemPromptExpandedUpdated -> copy(isSystemPromptExpanded = msg.isExpanded)
             }
     }
 

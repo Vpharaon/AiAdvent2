@@ -45,7 +45,7 @@ fun MessagesArea(
                 MessageItem(message = message)
             }
 
-            // Индикатор "Bot is typing..."
+            // Индикатор "Агент печатает..."
             if (isTyping) {
                 item {
                     TypingIndicator()

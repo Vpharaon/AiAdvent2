@@ -18,6 +18,8 @@ fun ChatScreen(component: component.ChatComponent) {
     val messages = state.messages
     val input = state.input
     val isTyping = state.isTyping
+    val systemPrompt = state.systemPrompt
+    val isEditorExpanded = state.isSystemPromptExpanded
 
     Column(
         modifier = Modifier
@@ -44,28 +46,93 @@ fun ChatScreen(component: component.ChatComponent) {
                     color = MaterialTheme.colorScheme.onBackground
                 )
             }
-            IconButton(onClick = component::onSettingsClick) {
-                Text("⚙️", style = MaterialTheme.typography.titleLarge)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(onClick = component::onToggleSystemPromptEditor) {
+                    Text(
+                        if (isEditorExpanded) "✏️" else "👤",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
+                IconButton(onClick = component::onSettingsClick) {
+                    Text("⚙️", style = MaterialTheme.typography.titleLarge)
+                }
             }
         }
 
-        // Область сообщений
-        MessagesArea(
-            messages = messages,
-            isTyping = isTyping,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        )
+        // Основной контент с разделением
+        Row(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Левая часть - чат
+            Column(
+                modifier = Modifier.weight(if (isEditorExpanded) 0.5f else 1f)
+            ) {
+                // Область сообщений
+                MessagesArea(
+                    messages = messages,
+                    isTyping = isTyping,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                )
 
-        Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-        // Область ввода и кнопок
-        InputArea(
-            input = input,
-            onInputChange = component::onInputChange,
-            onSendClick = component::onSendClick,
-            onClearClick = component::onClearClick
-        )
+                // Область ввода и кнопок
+                InputArea(
+                    input = input,
+                    onInputChange = component::onInputChange,
+                    onSendClick = component::onSendClick,
+                    onClearClick = component::onClearClick
+                )
+            }
+
+            // Правая часть - редактор роли агента
+            if (isEditorExpanded) {
+                Card(
+                    modifier = Modifier.weight(0.5f).fillMaxHeight(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Роль агента",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            IconButton(onClick = component::onToggleSystemPromptEditor) {
+                                Text("✕", style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = systemPrompt,
+                            onValueChange = component::onSystemPromptChange,
+                            placeholder = { Text("Введите описание роли AI агента") },
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            textStyle = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Button(
+                            onClick = component::onSaveSystemPromptClick,
+                            enabled = systemPrompt.isNotEmpty(),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Сохранить и применить")
+                        }
+                    }
+                }
+            }
+        }
     }
 }

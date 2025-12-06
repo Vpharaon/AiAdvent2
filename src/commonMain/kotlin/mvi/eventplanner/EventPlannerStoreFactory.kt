@@ -63,7 +63,7 @@ internal class EventPlannerStoreFactory(
                 Action.InitAction -> {
                     // Подписка на изменения сообщений
                     scope.launch {
-                        chatRepository.messages.collect { messages ->
+                        chatRepository.messagesFlow().collect { messages ->
                             dispatch(Message.MessagesUpdated(messages))
                         }
                     }

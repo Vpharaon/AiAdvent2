@@ -65,6 +65,7 @@ class DefaultRootComponent(
                     componentContext = componentContext,
                     storeFactory = storeFactory,
                     chatRepository = chatRepository,
+                    settingsRepository = settingsRepository,
                     onNavigateBack = ::navigateBack,
                     onNavigateToSettings = ::navigateToSettings
                 )

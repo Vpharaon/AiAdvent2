@@ -9,6 +9,9 @@ interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> 
         data class UpdateInput(val text: String) : Intent
         data object SendMessage : Intent
         data object ClearChat : Intent
+        data class UpdateSystemPrompt(val systemPrompt: String) : Intent
+        data object SaveSystemPrompt : Intent
+        data object ToggleSystemPromptEditor : Intent
     }
 
     sealed interface Label
@@ -16,6 +19,8 @@ interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> 
     data class State(
         val messages: List<Message> = emptyList(),
         val input: String = "",
-        val isTyping: Boolean = false
+        val isTyping: Boolean = false,
+        val systemPrompt: String = "",
+        val isSystemPromptExpanded: Boolean = false
     )
 }

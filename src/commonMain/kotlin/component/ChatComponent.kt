@@ -5,6 +5,7 @@ import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
 import data.repository.ChatRepository
+import data.repository.SettingsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import mvi.chat.ChatStore
@@ -16,6 +17,9 @@ interface ChatComponent {
     fun onInputChange(text: String)
     fun onSendClick()
     fun onClearClick()
+    fun onSystemPromptChange(systemPrompt: String)
+    fun onSaveSystemPromptClick()
+    fun onToggleSystemPromptEditor()
     fun onBackClick()
     fun onSettingsClick()
 }
@@ -24,6 +28,7 @@ class DefaultChatComponent(
     componentContext: ComponentContext,
     storeFactory: StoreFactory,
     chatRepository: ChatRepository,
+    settingsRepository: SettingsRepository,
     private val onNavigateBack: () -> Unit,
     private val onNavigateToSettings: () -> Unit
 ) : ChatComponent, ComponentContext by componentContext {
@@ -48,6 +53,18 @@ class DefaultChatComponent(
 
     override fun onClearClick() {
         store.accept(ChatStore.Intent.ClearChat)
+    }
+
+    override fun onSystemPromptChange(systemPrompt: String) {
+        store.accept(ChatStore.Intent.UpdateSystemPrompt(systemPrompt))
+    }
+
+    override fun onSaveSystemPromptClick() {
+        store.accept(ChatStore.Intent.SaveSystemPrompt)
+    }
+
+    override fun onToggleSystemPromptEditor() {
+        store.accept(ChatStore.Intent.ToggleSystemPromptEditor)
     }
 
     override fun onBackClick() {
