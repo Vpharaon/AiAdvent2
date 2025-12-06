@@ -1,6 +1,7 @@
 package mvi.eventplanner
 
 import com.arkivanov.mvikotlin.core.store.Reducer
+import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
@@ -29,12 +30,20 @@ internal class EventPlannerStoreFactory(
     private val conversationHistory = mutableListOf<ChatMessage>()
 
     fun create(): EventPlannerStore =
-        object : EventPlannerStore, Store<EventPlannerStore.Intent, EventPlannerStore.State, Nothing> by storeFactory.create(
-            name = "EventPlannerStore",
-            initialState = EventPlannerStore.State(),
-            executorFactory = ::ExecutorImpl,
-            reducer = ReducerImpl
-        ) {}
+        object : EventPlannerStore,
+            Store<EventPlannerStore.Intent, EventPlannerStore.State, Nothing> by storeFactory.create(
+                name = "EventPlannerStore",
+                initialState = EventPlannerStore.State(),
+                executorFactory = ::ExecutorImpl,
+                reducer = ReducerImpl,
+                bootstrapper = SimpleBootstrapper(
+                    Action.InitAction
+                )
+            ) {}
+
+    private sealed interface Action {
+        data object InitAction : Action
+    }
 
     private sealed interface Message {
         data class MessagesUpdated(val messages: List<domain.Message>) : Message
@@ -45,67 +54,25 @@ internal class EventPlannerStoreFactory(
         data class TabSelected(val tab: EventPlanTab) : Message
     }
 
-    private inner class ExecutorImpl : CoroutineExecutor<EventPlannerStore.Intent, Nothing, EventPlannerStore.State, Message, Nothing>() {
-        override fun executeAction(action: Nothing) {
-            // Подписка на изменения сообщений
-            scope.launch {
-                chatRepository.messages.collect { messages ->
-                    dispatch(Message.MessagesUpdated(messages))
-                }
-            }
+    private inner class ExecutorImpl :
+        CoroutineExecutor<EventPlannerStore.Intent, Action, EventPlannerStore.State, Message, Nothing>() {
 
-            // Инициализируем диалог с системным промптом
-            scope.launch {
-                startConversation()
-            }
-        }
-
-        private suspend fun startConversation() {
-            dispatch(Message.TypingUpdated(true))
-
-            try {
-                // Добавляем системный промпт
-                val systemPrompt = promptBuilder.buildEventPlannerPrompt()
-                conversationHistory.add(
-                    ChatMessage(
-                        role = MessageRole.SYSTEM,
-                        content = systemPrompt
-                    )
-                )
-
-                // Добавляем начальное сообщение пользователя
-                val initialUserMessage = "Здравствуйте! Я хочу организовать новогодний корпоратив для нашей компании."
-                conversationHistory.add(
-                    ChatMessage(
-                        role = MessageRole.USER,
-                        content = initialUserMessage
-                    )
-                )
-
-                // Получаем первое сообщение от менеджера
-                val result = chatRepository.sendMessageWithHistory(conversationHistory)
-
-                result.onSuccess { response ->
-                    val assistantMessage = response.choices?.firstOrNull()?.message?.content
-
-                    if (assistantMessage != null) {
-                        conversationHistory.add(
-                            ChatMessage(
-                                role = MessageRole.ASSISTANT,
-                                content = assistantMessage
-                            )
-                        )
-                        chatRepository.addAssistantMessage(assistantMessage)
-                    } else {
-                        dispatch(Message.ErrorUpdated("Не удалось получить приветствие от менеджера"))
+        override fun executeAction(action: Action) {
+            super.executeAction(action)
+            when (action) {
+                Action.InitAction -> {
+                    // Подписка на изменения сообщений
+                    scope.launch {
+                        chatRepository.messages.collect { messages ->
+                            dispatch(Message.MessagesUpdated(messages))
+                        }
                     }
-                }.onFailure { error ->
-                    dispatch(Message.ErrorUpdated("Ошибка инициализации: ${error.message}"))
+
+                    // Инициализируем диалог с системным промптом
+                    scope.launch {
+                        startConversation()
+                    }
                 }
-            } catch (e: Exception) {
-                dispatch(Message.ErrorUpdated("Ошибка: ${e.message}"))
-            } finally {
-                dispatch(Message.TypingUpdated(false))
             }
         }
 
@@ -195,6 +162,55 @@ internal class EventPlannerStoreFactory(
                 is EventPlannerStore.Intent.SelectTab -> {
                     dispatch(Message.TabSelected(intent.tab))
                 }
+            }
+        }
+
+        private suspend fun startConversation() {
+            dispatch(Message.TypingUpdated(true))
+
+            try {
+                // Добавляем системный промпт
+                val systemPrompt = promptBuilder.buildEventPlannerPrompt()
+                conversationHistory.add(
+                    ChatMessage(
+                        role = MessageRole.SYSTEM,
+                        content = systemPrompt
+                    )
+                )
+
+                // Добавляем начальное сообщение пользователя
+                val initialUserMessage = "Hello! I would like to organize a New Year's corporate party for our company."
+                conversationHistory.add(
+                    ChatMessage(
+                        role = MessageRole.USER,
+                        content = initialUserMessage
+                    )
+                )
+
+                // Получаем первое сообщение от менеджера
+                val result = chatRepository.sendMessageWithHistory(conversationHistory)
+
+                result.onSuccess { response ->
+                    val assistantMessage = response.choices?.firstOrNull()?.message?.content
+
+                    if (assistantMessage != null) {
+                        conversationHistory.add(
+                            ChatMessage(
+                                role = MessageRole.ASSISTANT,
+                                content = assistantMessage
+                            )
+                        )
+                        chatRepository.addAssistantMessage(assistantMessage)
+                    } else {
+                        dispatch(Message.ErrorUpdated("Не удалось получить приветствие от менеджера"))
+                    }
+                }.onFailure { error ->
+                    dispatch(Message.ErrorUpdated("Ошибка инициализации: ${error.message}"))
+                }
+            } catch (e: Exception) {
+                dispatch(Message.ErrorUpdated("Ошибка: ${e.message}"))
+            } finally {
+                dispatch(Message.TypingUpdated(false))
             }
         }
     }

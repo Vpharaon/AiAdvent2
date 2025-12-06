@@ -1,11 +1,11 @@
 package mvi.chat
 
 import com.arkivanov.mvikotlin.core.store.Reducer
+import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import data.repository.ChatRepository
-import domain.Message
 import kotlinx.coroutines.launch
 
 internal class ChatStoreFactory(
@@ -13,12 +13,19 @@ internal class ChatStoreFactory(
     private val chatRepository: ChatRepository
 ) {
 
+    sealed interface Action {
+        data object InitAction: Action
+    }
+
     fun create(): ChatStore =
-        object : ChatStore, Store<ChatStore.Intent, ChatStore.State, Nothing> by storeFactory.create(
+        object : ChatStore, Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> by storeFactory.create(
             name = "ChatStore",
             initialState = ChatStore.State(),
             executorFactory = ::ExecutorImpl,
-            reducer = ReducerImpl
+            reducer = ReducerImpl,
+            bootstrapper = SimpleBootstrapper(
+                Action.InitAction
+            )
         ) {}
 
     private sealed interface Message {
@@ -27,20 +34,28 @@ internal class ChatStoreFactory(
         data class TypingUpdated(val isTyping: Boolean) : Message
     }
 
-    private inner class ExecutorImpl : CoroutineExecutor<ChatStore.Intent, Nothing, ChatStore.State, Message, Nothing>() {
-        override fun executeAction(action: Nothing) {
-            // Подписка на изменения сообщений
-            scope.launch {
-                chatRepository.messages.collect { messages ->
-                    dispatch(Message.MessagesUpdated(messages))
-                }
-            }
+    private inner class ExecutorImpl :
+        CoroutineExecutor<ChatStore.Intent, Action, ChatStore.State, Message, Nothing>() {
 
-            // Отправляем приветственное сообщение
-            scope.launch {
-                dispatch(Message.TypingUpdated(true))
-                chatRepository.sendWelcomeMessage()
-                dispatch(Message.TypingUpdated(false))
+        override fun executeAction(action: Action) {
+            super.executeAction(action)
+
+            when (action) {
+                Action.InitAction -> {
+                    // Подписка на изменения сообщений
+                    scope.launch {
+                        chatRepository.messages.collect { messages ->
+                            dispatch(Message.MessagesUpdated(messages))
+                        }
+                    }
+
+                    // Отправляем приветственное сообщение
+                    scope.launch {
+                        dispatch(Message.TypingUpdated(true))
+                        chatRepository.sendWelcomeMessage()
+                        dispatch(Message.TypingUpdated(false))
+                    }
+                }
             }
         }
 

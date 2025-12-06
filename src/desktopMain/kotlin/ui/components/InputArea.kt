@@ -45,21 +45,21 @@ fun InputArea(
             maxLines = 4
         )
 
-        // Кнопка Send
+        // Кнопка Отправить
         Button(
             onClick = onSendClick,
             modifier = Modifier.height(56.dp),
             enabled = input.trim().isNotEmpty()
         ) {
-            Text("Send")
+            Text("Отправить")
         }
 
-        // Кнопка Clear Chat
+        // Кнопка Очистить чат
         OutlinedButton(
             onClick = onClearClick,
             modifier = Modifier.height(56.dp)
         ) {
-            Text("Clear Chat")
+            Text("Очистить чат")
         }
     }
 }

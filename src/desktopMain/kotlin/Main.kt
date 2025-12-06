@@ -11,6 +11,7 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.arkivanov.mvikotlin.core.utils.setMainThreadId
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import component.*
 import data.repository.SettingsRepository
@@ -36,6 +37,9 @@ fun loadLocalProperties(): Properties {
 }
 
 fun main() = application {
+    // Инициализируем MVIKotlin main thread
+    setMainThreadId(Thread.currentThread().id)
+
     // Загружаем local.properties
     val localProperties = loadLocalProperties()
 

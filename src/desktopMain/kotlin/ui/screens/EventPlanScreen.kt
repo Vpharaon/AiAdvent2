@@ -35,13 +35,18 @@ fun EventPlanScreen(component: component.EventPlannerComponent) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Менеджер ресторана",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            IconButton(onClick = component::onBackClick) {
-                Text("←", style = MaterialTheme.typography.titleLarge)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(onClick = component::onBackClick) {
+                    Text("←", style = MaterialTheme.typography.titleLarge)
+                }
+                Text(
+                    text = "Менеджер ресторана",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             }
         }
 

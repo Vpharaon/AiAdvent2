@@ -1,0 +1,149 @@
+# ==================================================================================================
+# VERSION CATALOG
+# ==================================================================================================
+# This file defines all dependencies, plugins, and versions for the project.
+# Use `libs.*` notation in build.gradle.kts to reference these definitions.
+# ==================================================================================================
+
+[versions]
+# --------------------------------------------------------------------------------------------------
+# Kotlin & Build Tools
+# --------------------------------------------------------------------------------------------------
+kotlin = "2.2.20"
+compose = "1.7.1"
+
+# --------------------------------------------------------------------------------------------------
+# Async & Concurrency
+# --------------------------------------------------------------------------------------------------
+coroutines = "1.9.0"
+
+# --------------------------------------------------------------------------------------------------
+# Networking
+# --------------------------------------------------------------------------------------------------
+ktor = "3.0.1"
+
+# --------------------------------------------------------------------------------------------------
+# Serialization
+# --------------------------------------------------------------------------------------------------
+kotlinx-serialization = "1.7.3"
+
+# --------------------------------------------------------------------------------------------------
+# Dependency Injection
+# --------------------------------------------------------------------------------------------------
+koin = "4.0.0"
+
+# --------------------------------------------------------------------------------------------------
+# Architecture Components
+# --------------------------------------------------------------------------------------------------
+mvikotlin = "4.0.0"
+decompose = "3.0.0"
+essenty = "2.0.0"
+
+# --------------------------------------------------------------------------------------------------
+# Logging
+# --------------------------------------------------------------------------------------------------
+logback = "1.4.11"
+
+# --------------------------------------------------------------------------------------------------
+# UI & Formatting
+# --------------------------------------------------------------------------------------------------
+markdown = "0.7.3"
+
+[libraries]
+# --------------------------------------------------------------------------------------------------
+# Async & Concurrency
+# --------------------------------------------------------------------------------------------------
+coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
+
+# --------------------------------------------------------------------------------------------------
+# Networking - Ktor Client
+# --------------------------------------------------------------------------------------------------
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+# --------------------------------------------------------------------------------------------------
+# Serialization
+# --------------------------------------------------------------------------------------------------
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+
+# --------------------------------------------------------------------------------------------------
+# Dependency Injection - Koin
+# --------------------------------------------------------------------------------------------------
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
+
+# --------------------------------------------------------------------------------------------------
+# Architecture - MVIKotlin
+# --------------------------------------------------------------------------------------------------
+mvikotlin-core = { module = "com.arkivanov.mvikotlin:mvikotlin", version.ref = "mvikotlin" }
+mvikotlin-main = { module = "com.arkivanov.mvikotlin:mvikotlin-main", version.ref = "mvikotlin" }
+mvikotlin-coroutines = { module = "com.arkivanov.mvikotlin:mvikotlin-extensions-coroutines", version.ref = "mvikotlin" }
+
+# --------------------------------------------------------------------------------------------------
+# Architecture - Decompose
+# --------------------------------------------------------------------------------------------------
+decompose-core = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
+decompose-compose = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }
+essenty-lifecycle = { module = "com.arkivanov.essenty:lifecycle", version.ref = "essenty" }
+
+# --------------------------------------------------------------------------------------------------
+# Logging
+# --------------------------------------------------------------------------------------------------
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+# --------------------------------------------------------------------------------------------------
+# UI & Formatting
+# --------------------------------------------------------------------------------------------------
+markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
+
+# ==================================================================================================
+# DEPENDENCY BUNDLES
+# ==================================================================================================
+# Bundles group related dependencies for easier management.
+# Use `libs.bundles.*` to include multiple dependencies at once.
+# ==================================================================================================
+
+[bundles]
+# Ktor Client - HTTP client with serialization and logging
+ktor-client = [
+    "ktor-client-core",
+    "ktor-client-content-negotiation",
+    "ktor-client-logging",
+    "ktor-serialization-json"
+]
+
+# MVIKotlin - MVI framework for state management
+mvikotlin = [
+    "mvikotlin-core",
+    "mvikotlin-main",
+    "mvikotlin-coroutines"
+]
+
+# Decompose - Navigation and lifecycle management
+decompose = [
+    "decompose-core",
+    "decompose-compose",
+    "essenty-lifecycle"
+]
+
+# Koin - Dependency injection framework
+koin = [
+    "koin-core"
+]
+
+# ==================================================================================================
+# PLUGINS
+# ==================================================================================================
+# Gradle plugins used in the build process.
+# Use `alias(libs.plugins.*)` in plugins block.
+# ==================================================================================================
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+compose = { id = "org.jetbrains.compose", version.ref = "compose" }

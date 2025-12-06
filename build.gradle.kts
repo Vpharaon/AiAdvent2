@@ -1,8 +1,15 @@
+// ==================================================================================================
+// BUILD CONFIGURATION
+// ==================================================================================================
+// Multiplatform Kotlin project with Compose Desktop UI
+// Architecture: MVI (MVIKotlin) + Decompose for navigation
+// ==================================================================================================
+
 plugins {
-    kotlin("multiplatform") version "2.2.20"
-    kotlin("plugin.serialization") version "2.2.20"
-    id("org.jetbrains.compose") version "1.7.1"
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.compose)
+    alias(libs.plugins.kotlin.compose)
 }
 
 group = "org.example"
@@ -13,60 +20,90 @@ repositories {
     google()
 }
 
+// ==================================================================================================
+// KOTLIN MULTIPLATFORM CONFIGURATION
+// ==================================================================================================
+
 kotlin {
     jvmToolchain(17)
 
-    // Desktop target (JVM)
+    // --------------------------------------------------------------------------------------------------
+    // Target Platforms
+    // --------------------------------------------------------------------------------------------------
     jvm("desktop")
 
+    // --------------------------------------------------------------------------------------------------
+    // Source Sets
+    // --------------------------------------------------------------------------------------------------
     sourceSets {
+        // Common - Shared code for all platforms
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
-                implementation("io.ktor:ktor-client-core:3.0.1")
-                implementation("io.ktor:ktor-client-content-negotiation:3.0.1")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.1")
-                implementation("io.ktor:ktor-client-logging:3.0.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
-                implementation("io.insert-koin:koin-core:4.0.0")
+                // Async & Concurrency
+                implementation(libs.coroutines.core)
 
-                // MVIKotlin
-                implementation("com.arkivanov.mvikotlin:mvikotlin:4.0.0")
-                implementation("com.arkivanov.mvikotlin:mvikotlin-main:4.0.0")
-                implementation("com.arkivanov.mvikotlin:mvikotlin-extensions-coroutines:4.0.0")
+                // Networking
+                implementation(libs.bundles.ktor.client)
 
-                // Decompose
-                implementation("com.arkivanov.decompose:decompose:3.0.0")
-                implementation("com.arkivanov.decompose:extensions-compose:3.0.0")
-                implementation("com.arkivanov.essenty:lifecycle:2.0.0")
+                // Serialization
+                implementation(libs.kotlinx.serialization.json)
+
+                // Dependency Injection
+                implementation(libs.bundles.koin)
+
+                // Architecture - MVI
+                implementation(libs.bundles.mvikotlin)
+
+                // Architecture - Navigation
+                implementation(libs.bundles.decompose)
             }
         }
+
+        // Common Tests
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
             }
         }
 
+        // Desktop (JVM) - Platform-specific code
         val desktopMain by getting {
             dependencies {
+                // Compose Desktop UI
                 implementation(compose.desktop.currentOs)
                 implementation(compose.material3)
                 implementation(compose.ui)
                 implementation(compose.foundation)
                 implementation(compose.runtime)
-                implementation("io.ktor:ktor-client-cio:3.0.1")
-                implementation("io.insert-koin:koin-compose:4.0.0")
-                implementation("ch.qos.logback:logback-classic:1.4.11")
-                implementation("org.jetbrains:markdown:0.7.3")
+
+                // Networking - Engine
+                implementation(libs.ktor.client.cio)
+
+                // Async - Swing support
+                implementation(libs.coroutines.swing)
+
+                // Dependency Injection - Compose integration
+                implementation(libs.koin.compose)
+
+                // Logging
+                implementation(libs.logback.classic)
+
+                // UI - Markdown rendering
+                implementation(libs.markdown)
             }
         }
 
+        // Desktop Tests
         val desktopTest by getting {
             dependencies {
             }
         }
     }
 }
+
+// ==================================================================================================
+// COMPOSE DESKTOP CONFIGURATION
+// ==================================================================================================
 
 compose.desktop {
     application {

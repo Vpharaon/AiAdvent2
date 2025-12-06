@@ -27,7 +27,7 @@ internal class SettingsStoreFactory(
     }
 
     private inner class ExecutorImpl : CoroutineExecutor<SettingsStore.Intent, Nothing, SettingsStore.State, Message, Nothing>() {
-        override fun executeAction(action: Nothing) {
+        init {
             // Подписка на изменения настроек
             scope.launch {
                 settingsRepository.settings.collect { settings ->

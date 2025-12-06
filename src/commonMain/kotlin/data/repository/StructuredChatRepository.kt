@@ -38,7 +38,7 @@ class StructuredChatRepository(
         val messages = listOf(
             ChatMessage(
                 role = MessageRole.SYSTEM,
-                content = "Ты - шеф-повар мирового класса. Отвечай ТОЛЬКО в формате JSON без дополнительного текста."
+                content = "You are a world-class chef. Answer ONLY in JSON format, without additional text."
             ),
             ChatMessage(
                 role = MessageRole.USER,
@@ -80,7 +80,7 @@ class StructuredChatRepository(
         val messages = listOf(
             ChatMessage(
                 role = MessageRole.SYSTEM,
-                content = "Ты - шеф-повар мирового класса. Отвечай ТОЛЬКО в формате JSON без дополнительного текста."
+                content = "You are a world-class chef. Answer ONLY in JSON format, without additional text."
             ),
             ChatMessage(
                 role = MessageRole.USER,

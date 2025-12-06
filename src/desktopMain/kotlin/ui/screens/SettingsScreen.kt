@@ -28,13 +28,18 @@ fun SettingsScreen(component: component.SettingsComponent) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Настройки",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            IconButton(onClick = component::onBackClick) {
-                Text("←", style = MaterialTheme.typography.titleLarge)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(onClick = component::onBackClick) {
+                    Text("←", style = MaterialTheme.typography.titleLarge)
+                }
+                Text(
+                    text = "Настройки",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             }
         }
 

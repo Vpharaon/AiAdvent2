@@ -26,11 +26,11 @@ class ChatRepository(
     suspend fun sendWelcomeMessage() {
         val systemMessage = ChatMessage(
             role = MessageRole.SYSTEM,
-            content = "Ты — полезный AI-ассистент"
+            content = "You are a useful AI assistant"
         )
         val userMessage = ChatMessage(
             role = MessageRole.USER,
-            content = "Поздоровайся и опиши очень кратко чем ты можешь быть полезен"
+            content = "Say hello and briefly describe how you can help."
         )
         sendMessage(messages = listOf(systemMessage, userMessage))
     }
