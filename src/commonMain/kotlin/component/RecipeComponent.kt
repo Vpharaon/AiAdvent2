@@ -4,7 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
-import data.repository.StructuredChatRepository
+import domain.usecase.recipe.GetRecipeUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import mvi.recipe.RecipeStore
@@ -22,14 +22,14 @@ interface RecipeComponent {
 class DefaultRecipeComponent(
     componentContext: ComponentContext,
     storeFactory: StoreFactory,
-    structuredChatRepository: StructuredChatRepository,
+    getRecipeUseCase: GetRecipeUseCase,
     private val onNavigateBack: () -> Unit
 ) : RecipeComponent, ComponentContext by componentContext {
 
     private val store = instanceKeeper.getStore {
         RecipeStoreFactory(
             storeFactory = storeFactory,
-            structuredChatRepository = structuredChatRepository
+            getRecipeUseCase = getRecipeUseCase
         ).create()
     }
 

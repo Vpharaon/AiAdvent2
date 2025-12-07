@@ -1,8 +1,9 @@
 package data.repository
 
-import data.network.LLMApi
+import data.mapper.MessageMapper
 import data.network.model.ChatMessage
 import data.network.model.MessageRole
+import data.source.remote.LLMRemoteDataSource
 import domain.ApiError
 import domain.Message
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,7 @@ interface ChatRepository {
     /**
      * Поток сообщений чата
      */
-    suspend fun messagesFlow(): StateFlow<List<Message>>
+    val messages: StateFlow<List<Message>>
 
     /**
      * Отправляет system prompt с приветственным сообщением и учитывает историю
@@ -26,41 +27,26 @@ interface ChatRepository {
     /**
      * Отправляет сообщение пользователя с учетом истории
      */
+
     suspend fun sendUserMessageWithHistory(userMessageText: String)
 
     /**
      * Очищает все сообщения
      */
     fun clearMessages()
-
-    /**
-     * Добавляет сообщение пользователя в список сообщений (без отправки в API)
-     */
-    fun addUserMessage(content: String)
-
-    /**
-     * Добавляет сообщение ассистента в список сообщений (без отправки в API)
-     */
-    fun addAssistantMessage(content: String)
-
-    /**
-     * Отправляет сообщение с заданной историей диалога
-     * Возвращает сырой ответ от API для дальнейшей обработки
-     */
-    suspend fun sendMessageWithHistory(history: List<ChatMessage>): Result<data.network.model.ChatResponse>
 }
 
 /**
- * Реализация репозитория для работы с чатом
+ * Реализация репозитория для работы с чатом.
+ * Использует DataSource для работы с удаленным API и Mapper для конвертации моделей.
  */
 class ChatRepositoryImpl(
-    private val llmApiClient: LLMApi,
+    private val remoteDataSource: LLMRemoteDataSource,
     private val settingsRepository: SettingsRepository
 ) : ChatRepository {
     // In-memory cache для сообщений
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
-
-    override suspend fun messagesFlow(): StateFlow<List<Message>> = _messages.asStateFlow()
+    override val messages: StateFlow<List<Message>> = _messages.asStateFlow()
 
     companion object {
         // Максимальное количество сообщений в истории для отправки в API
@@ -136,10 +122,11 @@ class ChatRepositoryImpl(
 
     /**
      * Отправляет сообщение пользователя, получает ответ от LLM и обновляет кеш сообщений.
+     * Использует DataSource вместо прямого вызова API.
      */
     private suspend fun sendMessage(messages: List<ChatMessage>) {
         val settings = settingsRepository.getCurrentSettings()
-        val result: Result<data.network.model.ChatResponse> = llmApiClient.sendMessage(
+        val result = remoteDataSource.sendMessages(
             messages = messages,
             temperature = settings.temperature,
             maxTokens = settings.maxTokens
@@ -179,44 +166,5 @@ class ChatRepositoryImpl(
 
     override fun clearMessages() {
         _messages.value = emptyList()
-    }
-
-    /**
-     * Добавляет сообщение пользователя в список сообщений (без отправки в API)
-     */
-    override fun addUserMessage(content: String) {
-        val userMessage = Message(
-            id = System.currentTimeMillis().toString(),
-            content = content,
-            role = MessageRole.USER.value,
-            timestamp = System.currentTimeMillis()
-        )
-        _messages.value += userMessage
-    }
-
-    /**
-     * Добавляет сообщение ассистента в список сообщений (без отправки в API)
-     */
-    override fun addAssistantMessage(content: String) {
-        val assistantMessage = Message(
-            id = System.currentTimeMillis().toString(),
-            content = content,
-            role = MessageRole.ASSISTANT.value,
-            timestamp = System.currentTimeMillis()
-        )
-        _messages.value += assistantMessage
-    }
-
-    /**
-     * Отправляет сообщение с заданной историей диалога
-     * Возвращает сырой ответ от API для дальнейшей обработки
-     */
-    override suspend fun sendMessageWithHistory(history: List<ChatMessage>): Result<data.network.model.ChatResponse> {
-        val settings = settingsRepository.getCurrentSettings()
-        return llmApiClient.sendMessage(
-            messages = history,
-            temperature = settings.temperature,
-            maxTokens = settings.maxTokens
-        )
     }
 }

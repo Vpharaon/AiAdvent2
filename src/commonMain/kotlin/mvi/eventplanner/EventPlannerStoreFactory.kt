@@ -5,11 +5,12 @@ import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
-import data.repository.ChatRepository
-import data.parser.StructuredResponseParser
-import data.prompt.StructuredPromptBuilder
+import data.network.LLMApi
+import domain.util.StructuredResponseParser
+import domain.util.StructuredPromptBuilder
 import data.network.model.ChatMessage
 import data.network.model.MessageRole
+import data.repository.SettingsRepository
 import domain.Message
 import domain.structured.EventPlanWithRaw
 import kotlinx.coroutines.launch
@@ -19,7 +20,8 @@ import mvi.eventplanner.EventPlannerStore.EventPlanTab
 
 internal class EventPlannerStoreFactory(
     private val storeFactory: StoreFactory,
-    private val chatRepository: ChatRepository
+    private val llmApi: LLMApi,
+    private val settingsRepository: SettingsRepository
 ) {
     private val parser = StructuredResponseParser()
     private val promptBuilder = StructuredPromptBuilder()
@@ -61,13 +63,6 @@ internal class EventPlannerStoreFactory(
             super.executeAction(action)
             when (action) {
                 Action.InitAction -> {
-                    // Подписка на изменения сообщений
-                    scope.launch {
-                        chatRepository.messagesFlow().collect { messages ->
-                            dispatch(Message.MessagesUpdated(messages))
-                        }
-                    }
-
                     // Инициализируем диалог с системным промптом
                     scope.launch {
                         startConversation()
@@ -95,6 +90,16 @@ internal class EventPlannerStoreFactory(
                         dispatch(Message.ErrorUpdated(null))
 
                         try {
+                            // Добавляем сообщение пользователя в UI
+                            val userMessage = domain.Message(
+                                id = System.currentTimeMillis().toString(),
+                                content = messageText,
+                                role = MessageRole.USER.value,
+                                timestamp = System.currentTimeMillis()
+                            )
+                            dispatch(Message.MessagesUpdated(state().messages + userMessage))
+
+                            // Добавляем в историю для API
                             conversationHistory.add(
                                 ChatMessage(
                                     role = MessageRole.USER,
@@ -102,14 +107,19 @@ internal class EventPlannerStoreFactory(
                                 )
                             )
 
-                            chatRepository.addUserMessage(messageText)
-
-                            val result = chatRepository.sendMessageWithHistory(conversationHistory)
+                            // Отправляем запрос
+                            val settings = settingsRepository.getCurrentSettings()
+                            val result = llmApi.sendMessage(
+                                messages = conversationHistory,
+                                temperature = settings.temperature,
+                                maxTokens = settings.maxTokens
+                            )
 
                             result.onSuccess { response ->
                                 val assistantMessage = response.choices?.firstOrNull()?.message?.content
 
                                 if (assistantMessage != null) {
+                                    // Добавляем ответ в историю
                                     conversationHistory.add(
                                         ChatMessage(
                                             role = MessageRole.ASSISTANT,
@@ -117,17 +127,23 @@ internal class EventPlannerStoreFactory(
                                         )
                                     )
 
-                                    val parseResult = parser.parseEventPlanWithRaw(assistantMessage)
+                                    // Добавляем ответ в UI
+                                    val assistantDomainMessage = domain.Message(
+                                        id = response.id.orEmpty(),
+                                        content = assistantMessage,
+                                        role = MessageRole.ASSISTANT.value,
+                                        timestamp = response.created ?: System.currentTimeMillis()
+                                    )
+                                    dispatch(Message.MessagesUpdated(state().messages + assistantDomainMessage))
 
+                                    // Пробуем распарсить plan
+                                    val parseResult = parser.parseEventPlanWithRaw(assistantMessage)
                                     if (parseResult.isSuccess) {
                                         val eventPlanData = parseResult.getOrNull()!!
                                         val fullResponseJson = json.encodeToString(response)
 
                                         dispatch(Message.EventPlanUpdated(eventPlanData.copy(fullResponseJson = fullResponseJson)))
                                         dispatch(Message.TabSelected(EventPlanTab.PLAN))
-                                        chatRepository.addAssistantMessage(assistantMessage)
-                                    } else {
-                                        chatRepository.addAssistantMessage(assistantMessage)
                                     }
                                 } else {
                                     dispatch(Message.ErrorUpdated("Получен пустой ответ от сервера"))
@@ -147,8 +163,8 @@ internal class EventPlannerStoreFactory(
                 }
 
                 is EventPlannerStore.Intent.ClearChat -> {
-                    chatRepository.clearMessages()
                     conversationHistory.clear()
+                    dispatch(Message.MessagesUpdated(emptyList()))
                     dispatch(Message.InputUpdated(""))
                     dispatch(Message.EventPlanUpdated(null))
                     dispatch(Message.ErrorUpdated(null))
@@ -188,7 +204,12 @@ internal class EventPlannerStoreFactory(
                 )
 
                 // Получаем первое сообщение от менеджера
-                val result = chatRepository.sendMessageWithHistory(conversationHistory)
+                val settings = settingsRepository.getCurrentSettings()
+                val result = llmApi.sendMessage(
+                    messages = conversationHistory,
+                    temperature = settings.temperature,
+                    maxTokens = settings.maxTokens
+                )
 
                 result.onSuccess { response ->
                     val assistantMessage = response.choices?.firstOrNull()?.message?.content
@@ -200,7 +221,15 @@ internal class EventPlannerStoreFactory(
                                 content = assistantMessage
                             )
                         )
-                        chatRepository.addAssistantMessage(assistantMessage)
+
+                        // Добавляем ответ в UI
+                        val assistantDomainMessage = domain.Message(
+                            id = response.id.orEmpty(),
+                            content = assistantMessage,
+                            role = MessageRole.ASSISTANT.value,
+                            timestamp = response.created ?: System.currentTimeMillis()
+                        )
+                        dispatch(Message.MessagesUpdated(listOf(assistantDomainMessage)))
                     } else {
                         dispatch(Message.ErrorUpdated("Не удалось получить приветствие от менеджера"))
                     }

@@ -63,17 +63,40 @@ fun main() = application {
                 modules(appModule(apiKey, appScope))
             }
         ) {
+            // Repositories
+            val llmApi = koinInject<data.network.LLMApi>()
             val chatRepository = koinInject<data.repository.ChatRepository>()
-            val structuredChatRepository = koinInject<data.repository.StructuredChatRepository>()
             val settingsRepository = koinInject<SettingsRepository>()
+
+            // Chat Use Cases
+            val sendMessageUseCase = koinInject<domain.usecase.chat.SendMessageUseCase>()
+            val sendSystemPromptUseCase = koinInject<domain.usecase.chat.SendSystemPromptUseCase>()
+            val clearChatUseCase = koinInject<domain.usecase.chat.ClearChatUseCase>()
+
+            // Recipe Use Cases
+            val getRecipeUseCase = koinInject<domain.usecase.recipe.GetRecipeUseCase>()
+
+            // Settings Use Cases
+            val updateThemeUseCase = koinInject<domain.usecase.settings.UpdateThemeUseCase>()
+            val updateTemperatureUseCase = koinInject<domain.usecase.settings.UpdateTemperatureUseCase>()
+            val updateMaxTokensUseCase = koinInject<domain.usecase.settings.UpdateMaxTokensUseCase>()
+            val resetSettingsUseCase = koinInject<domain.usecase.settings.ResetSettingsUseCase>()
 
             val rootComponent = remember {
                 DefaultRootComponent(
                     componentContext = DefaultComponentContext(lifecycle = lifecycle),
                     storeFactory = DefaultStoreFactory(),
+                    llmApi = llmApi,
                     chatRepository = chatRepository,
-                    structuredChatRepository = structuredChatRepository,
-                    settingsRepository = settingsRepository
+                    settingsRepository = settingsRepository,
+                    sendMessageUseCase = sendMessageUseCase,
+                    sendSystemPromptUseCase = sendSystemPromptUseCase,
+                    clearChatUseCase = clearChatUseCase,
+                    getRecipeUseCase = getRecipeUseCase,
+                    updateThemeUseCase = updateThemeUseCase,
+                    updateTemperatureUseCase = updateTemperatureUseCase,
+                    updateMaxTokensUseCase = updateMaxTokensUseCase,
+                    resetSettingsUseCase = resetSettingsUseCase
                 )
             }
 

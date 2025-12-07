@@ -8,9 +8,17 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.mvikotlin.core.store.StoreFactory
+import data.network.LLMApi
 import data.repository.ChatRepository
 import data.repository.SettingsRepository
-import data.repository.StructuredChatRepository
+import domain.usecase.chat.ClearChatUseCase
+import domain.usecase.chat.SendMessageUseCase
+import domain.usecase.chat.SendSystemPromptUseCase
+import domain.usecase.recipe.GetRecipeUseCase
+import domain.usecase.settings.ResetSettingsUseCase
+import domain.usecase.settings.UpdateMaxTokensUseCase
+import domain.usecase.settings.UpdateTemperatureUseCase
+import domain.usecase.settings.UpdateThemeUseCase
 import kotlinx.serialization.Serializable
 
 interface RootComponent {
@@ -34,9 +42,20 @@ interface RootComponent {
 class DefaultRootComponent(
     componentContext: ComponentContext,
     private val storeFactory: StoreFactory,
+    private val llmApi: LLMApi,
     private val chatRepository: ChatRepository,
-    private val structuredChatRepository: StructuredChatRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    // Chat Use Cases
+    private val sendMessageUseCase: SendMessageUseCase,
+    private val sendSystemPromptUseCase: SendSystemPromptUseCase,
+    private val clearChatUseCase: ClearChatUseCase,
+    // Recipe Use Cases
+    private val getRecipeUseCase: GetRecipeUseCase,
+    // Settings Use Cases
+    private val updateThemeUseCase: UpdateThemeUseCase,
+    private val updateTemperatureUseCase: UpdateTemperatureUseCase,
+    private val updateMaxTokensUseCase: UpdateMaxTokensUseCase,
+    private val resetSettingsUseCase: ResetSettingsUseCase
 ) : RootComponent, ComponentContext by componentContext {
 
     private val navigation = StackNavigation<Config>()
@@ -65,7 +84,9 @@ class DefaultRootComponent(
                     componentContext = componentContext,
                     storeFactory = storeFactory,
                     chatRepository = chatRepository,
-                    settingsRepository = settingsRepository,
+                    sendMessageUseCase = sendMessageUseCase,
+                    sendSystemPromptUseCase = sendSystemPromptUseCase,
+                    clearChatUseCase = clearChatUseCase,
                     onNavigateBack = ::navigateBack,
                     onNavigateToSettings = ::navigateToSettings
                 )
@@ -74,7 +95,7 @@ class DefaultRootComponent(
                 DefaultRecipeComponent(
                     componentContext = componentContext,
                     storeFactory = storeFactory,
-                    structuredChatRepository = structuredChatRepository,
+                    getRecipeUseCase = getRecipeUseCase,
                     onNavigateBack = ::navigateBack
                 )
             )
@@ -82,7 +103,8 @@ class DefaultRootComponent(
                 DefaultEventPlannerComponent(
                     componentContext = componentContext,
                     storeFactory = storeFactory,
-                    chatRepository = chatRepository,
+                    llmApi = llmApi,
+                    settingsRepository = settingsRepository,
                     onNavigateBack = ::navigateBack
                 )
             )
@@ -91,6 +113,10 @@ class DefaultRootComponent(
                     componentContext = componentContext,
                     storeFactory = storeFactory,
                     settingsRepository = settingsRepository,
+                    updateThemeUseCase = updateThemeUseCase,
+                    updateTemperatureUseCase = updateTemperatureUseCase,
+                    updateMaxTokensUseCase = updateMaxTokensUseCase,
+                    resetSettingsUseCase = resetSettingsUseCase,
                     onNavigateBack = ::navigateBack
                 )
             )

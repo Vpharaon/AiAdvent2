@@ -4,20 +4,41 @@ import data.network.LLMApi
 import data.network.model.ChatMessage
 import data.network.model.ChatResponse
 import data.network.model.MessageRole
-import data.parser.StructuredResponseParser
-import data.prompt.StructuredPromptBuilder
+import domain.util.StructuredResponseParser
+import domain.util.StructuredPromptBuilder
 import domain.structured.RecipeResponse
 import domain.structured.RecipeWithRaw
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 /**
- * Репозиторий для работы со структурированными запросами к LLM
+ * Интерфейс репозитория для работы со структурированными запросами к LLM
  */
-class StructuredChatRepository(
+interface StructuredChatRepository {
+    /**
+     * Получает структурированный рецепт блюда от шеф-повара
+     *
+     * @param dishName Название блюда
+     * @return Result с RecipeResponse или ошибкой
+     */
+    suspend fun getRecipe(dishName: String): Result<RecipeResponse>
+
+    /**
+     * Получает структурированный рецепт блюда с сохранением raw и cleaned JSON
+     *
+     * @param dishName Название блюда
+     * @return Result с RecipeWithRaw (рецепт + raw JSON + cleaned JSON) или ошибкой
+     */
+    suspend fun getRecipeWithRaw(dishName: String): Result<RecipeWithRaw>
+}
+
+/**
+ * Реализация репозитория для работы со структурированными запросами к LLM
+ */
+class StructuredChatRepositoryImpl(
     private val llmApiClient: LLMApi,
     private val settingsRepository: SettingsRepository
-) {
+) : StructuredChatRepository {
     private val promptBuilder = StructuredPromptBuilder()
     private val parser = StructuredResponseParser()
 
@@ -32,7 +53,7 @@ class StructuredChatRepository(
      * @param dishName Название блюда
      * @return Result с RecipeResponse или ошибкой
      */
-    suspend fun getRecipe(dishName: String): Result<RecipeResponse> {
+    override suspend fun getRecipe(dishName: String): Result<RecipeResponse> {
         val prompt = promptBuilder.buildRecipePrompt(dishName)
 
         val messages = listOf(
@@ -74,7 +95,7 @@ class StructuredChatRepository(
      * @param dishName Название блюда
      * @return Result с RecipeWithRaw (рецепт + raw JSON + cleaned JSON) или ошибкой
      */
-    suspend fun getRecipeWithRaw(dishName: String): Result<RecipeWithRaw> {
+    override suspend fun getRecipeWithRaw(dishName: String): Result<RecipeWithRaw> {
         val prompt = promptBuilder.buildRecipePrompt(dishName)
 
         val messages = listOf(

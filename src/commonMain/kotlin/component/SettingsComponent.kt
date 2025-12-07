@@ -6,6 +6,10 @@ import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
 import data.repository.SettingsRepository
 import domain.Theme
+import domain.usecase.settings.ResetSettingsUseCase
+import domain.usecase.settings.UpdateMaxTokensUseCase
+import domain.usecase.settings.UpdateTemperatureUseCase
+import domain.usecase.settings.UpdateThemeUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import mvi.settings.SettingsStore
@@ -25,13 +29,21 @@ class DefaultSettingsComponent(
     componentContext: ComponentContext,
     storeFactory: StoreFactory,
     settingsRepository: SettingsRepository,
+    updateThemeUseCase: UpdateThemeUseCase,
+    updateTemperatureUseCase: UpdateTemperatureUseCase,
+    updateMaxTokensUseCase: UpdateMaxTokensUseCase,
+    resetSettingsUseCase: ResetSettingsUseCase,
     private val onNavigateBack: () -> Unit
 ) : SettingsComponent, ComponentContext by componentContext {
 
     private val store = instanceKeeper.getStore {
         SettingsStoreFactory(
             storeFactory = storeFactory,
-            settingsRepository = settingsRepository
+            settingsRepository = settingsRepository,
+            updateThemeUseCase = updateThemeUseCase,
+            updateTemperatureUseCase = updateTemperatureUseCase,
+            updateMaxTokensUseCase = updateMaxTokensUseCase,
+            resetSettingsUseCase = resetSettingsUseCase
         ).create()
     }
 

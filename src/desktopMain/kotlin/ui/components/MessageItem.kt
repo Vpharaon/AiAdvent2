@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import domain.Message
 import ui.MarkdownText
+import ui.util.TimeFormatter
 
 @Composable
 fun MessageItem(message: Message) {
@@ -52,7 +53,7 @@ fun MessageItem(message: Message) {
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = message.formattedTime,
+                    text = TimeFormatter.formatTime(message.timestamp),
                     color = textColor.copy(alpha = 0.7f),
                     style = MaterialTheme.typography.bodySmall
                 )

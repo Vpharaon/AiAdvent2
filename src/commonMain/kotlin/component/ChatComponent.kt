@@ -5,7 +5,9 @@ import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
 import data.repository.ChatRepository
-import data.repository.SettingsRepository
+import domain.usecase.chat.ClearChatUseCase
+import domain.usecase.chat.SendMessageUseCase
+import domain.usecase.chat.SendSystemPromptUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import mvi.chat.ChatStore
@@ -28,7 +30,9 @@ class DefaultChatComponent(
     componentContext: ComponentContext,
     storeFactory: StoreFactory,
     chatRepository: ChatRepository,
-    settingsRepository: SettingsRepository,
+    sendMessageUseCase: SendMessageUseCase,
+    sendSystemPromptUseCase: SendSystemPromptUseCase,
+    clearChatUseCase: ClearChatUseCase,
     private val onNavigateBack: () -> Unit,
     private val onNavigateToSettings: () -> Unit
 ) : ChatComponent, ComponentContext by componentContext {
@@ -36,7 +40,10 @@ class DefaultChatComponent(
     private val store = instanceKeeper.getStore {
         ChatStoreFactory(
             storeFactory = storeFactory,
-            chatRepository = chatRepository
+            chatRepository = chatRepository,
+            sendMessageUseCase = sendMessageUseCase,
+            sendSystemPromptUseCase = sendSystemPromptUseCase,
+            clearChatUseCase = clearChatUseCase
         ).create()
     }
 

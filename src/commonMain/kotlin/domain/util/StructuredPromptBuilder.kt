@@ -1,7 +1,8 @@
-package data.prompt
+package domain.util
 
 /**
  * Билдер для создания промптов со структурированным выводом
+ * Содержит бизнес-логику формирования промптов для LLM
  */
 class StructuredPromptBuilder {
 

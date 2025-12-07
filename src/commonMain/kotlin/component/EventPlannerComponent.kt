@@ -4,7 +4,8 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
-import data.repository.ChatRepository
+import data.network.LLMApi
+import data.repository.SettingsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import mvi.eventplanner.EventPlannerStore
@@ -23,14 +24,16 @@ interface EventPlannerComponent {
 class DefaultEventPlannerComponent(
     componentContext: ComponentContext,
     storeFactory: StoreFactory,
-    chatRepository: ChatRepository,
+    llmApi: LLMApi,
+    settingsRepository: SettingsRepository,
     private val onNavigateBack: () -> Unit
 ) : EventPlannerComponent, ComponentContext by componentContext {
 
     private val store = instanceKeeper.getStore {
         EventPlannerStoreFactory(
             storeFactory = storeFactory,
-            chatRepository = chatRepository
+            llmApi = llmApi,
+            settingsRepository = settingsRepository
         ).create()
     }
 

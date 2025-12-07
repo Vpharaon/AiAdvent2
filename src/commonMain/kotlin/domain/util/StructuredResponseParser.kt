@@ -1,4 +1,4 @@
-package data.parser
+package domain.util
 
 import domain.structured.RecipeResponse
 import domain.structured.RecipeWithRaw
@@ -9,6 +9,7 @@ import kotlinx.serialization.decodeFromString
 
 /**
  * Парсер структурированных ответов от LLM
+ * Содержит бизнес-логику парсинга ответов от LLM
  */
 class StructuredResponseParser {
 

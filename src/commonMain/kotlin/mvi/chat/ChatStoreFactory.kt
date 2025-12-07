@@ -6,13 +6,22 @@ import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import data.repository.ChatRepository
-import data.repository.SettingsRepository
+import domain.usecase.chat.ClearChatUseCase
+import domain.usecase.chat.SendMessageUseCase
+import domain.usecase.chat.SendSystemPromptUseCase
 import kotlinx.coroutines.launch
 import mvi.chat.ChatStoreFactory.Message.*
 
+/**
+ * Factory для создания ChatStore.
+ * Использует Use Cases для выполнения бизнес-логики.
+ */
 internal class ChatStoreFactory(
     private val storeFactory: StoreFactory,
     private val chatRepository: ChatRepository,
+    private val sendMessageUseCase: SendMessageUseCase,
+    private val sendSystemPromptUseCase: SendSystemPromptUseCase,
+    private val clearChatUseCase: ClearChatUseCase
 ) {
 
     sealed interface Action {
@@ -48,7 +57,7 @@ internal class ChatStoreFactory(
                 Action.InitAction -> {
                     // Подписка на изменения сообщений
                     scope.launch {
-                        chatRepository.messagesFlow().collect { messages ->
+                        chatRepository.messages.collect { messages ->
                             dispatch(Message.MessagesUpdated(messages))
                         }
                     }
@@ -80,18 +89,21 @@ internal class ChatStoreFactory(
 
                     scope.launch {
                         dispatch(TypingUpdated(true))
-                        chatRepository.sendUserMessageWithHistory(messageText)
+                        // Используем Use Case вместо прямого вызова Repository
+                        sendMessageUseCase(messageText)
                         dispatch(TypingUpdated(false))
                     }
                 }
 
                 is ChatStore.Intent.ClearChat -> {
-                    chatRepository.clearMessages()
+                    // Используем Use Case для очистки
+                    clearChatUseCase()
                     dispatch(InputUpdated(""))
 
                     scope.launch {
                         dispatch(TypingUpdated(true))
-                        chatRepository.sendSystemPromptWithHistory(state().systemPrompt)
+                        // Используем Use Case для отправки system prompt
+                        sendSystemPromptUseCase(state().systemPrompt)
                         dispatch(TypingUpdated(false))
                     }
                 }
@@ -99,7 +111,8 @@ internal class ChatStoreFactory(
                 ChatStore.Intent.SaveSystemPrompt -> {
                     scope.launch {
                         dispatch(TypingUpdated(true))
-                        chatRepository.sendSystemPromptWithHistory(state().systemPrompt)
+                        // Используем Use Case для отправки system prompt
+                        sendSystemPromptUseCase(state().systemPrompt)
                         dispatch(TypingUpdated(false))
                     }
                 }

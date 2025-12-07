@@ -4,14 +4,18 @@ import com.arkivanov.mvikotlin.core.store.Reducer
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
-import data.repository.StructuredChatRepository
 import domain.structured.RecipeWithRaw
+import domain.usecase.recipe.GetRecipeUseCase
 import kotlinx.coroutines.launch
 import mvi.recipe.RecipeStore.RecipeTab
 
+/**
+ * Factory для создания RecipeStore.
+ * Использует Use Cases для выполнения бизнес-логики.
+ */
 internal class RecipeStoreFactory(
     private val storeFactory: StoreFactory,
-    private val structuredChatRepository: StructuredChatRepository
+    private val getRecipeUseCase: GetRecipeUseCase
 ) {
 
     fun create(): RecipeStore =
@@ -46,7 +50,7 @@ internal class RecipeStoreFactory(
                     dispatch(Message.RecipeDataUpdated(null))
 
                     scope.launch {
-                        val result = structuredChatRepository.getRecipeWithRaw(dishName)
+                        val result = getRecipeUseCase(dishName)
                         dispatch(Message.LoadingUpdated(false))
 
                         result.onSuccess { data ->

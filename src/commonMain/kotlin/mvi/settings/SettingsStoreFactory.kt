@@ -7,11 +7,23 @@ import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import data.repository.SettingsRepository
 import domain.AppSettings
+import domain.usecase.settings.ResetSettingsUseCase
+import domain.usecase.settings.UpdateMaxTokensUseCase
+import domain.usecase.settings.UpdateTemperatureUseCase
+import domain.usecase.settings.UpdateThemeUseCase
 import kotlinx.coroutines.launch
 
+/**
+ * Factory для создания SettingsStore.
+ * Использует Use Cases для выполнения бизнес-логики.
+ */
 internal class SettingsStoreFactory(
     private val storeFactory: StoreFactory,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val updateThemeUseCase: UpdateThemeUseCase,
+    private val updateTemperatureUseCase: UpdateTemperatureUseCase,
+    private val updateMaxTokensUseCase: UpdateMaxTokensUseCase,
+    private val resetSettingsUseCase: ResetSettingsUseCase
 ) {
 
     private sealed interface Action {
@@ -53,19 +65,19 @@ internal class SettingsStoreFactory(
         override fun executeIntent(intent: SettingsStore.Intent) {
             when (intent) {
                 is SettingsStore.Intent.UpdateTheme -> {
-                    settingsRepository.updateTheme(intent.theme)
+                    updateThemeUseCase(intent.theme)
                 }
 
                 is SettingsStore.Intent.UpdateTemperature -> {
-                    settingsRepository.updateTemperature(intent.temperature)
+                    updateTemperatureUseCase(intent.temperature)
                 }
 
                 is SettingsStore.Intent.UpdateMaxTokens -> {
-                    settingsRepository.updateMaxTokens(intent.maxTokens)
+                    updateMaxTokensUseCase(intent.maxTokens)
                 }
 
                 is SettingsStore.Intent.ResetToDefaults -> {
-                    settingsRepository.resetToDefaults()
+                    resetSettingsUseCase()
                 }
             }
         }
