@@ -4,8 +4,10 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
-import data.network.LLMApi
-import data.repository.SettingsRepository
+import data.repository.EventPlannerRepository
+import domain.usecase.eventplanner.ClearEventPlanChatUseCase
+import domain.usecase.eventplanner.SendEventPlanMessageUseCase
+import domain.usecase.eventplanner.StartEventPlanConversationUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import mvi.eventplanner.EventPlannerStore
@@ -24,16 +26,20 @@ interface EventPlannerComponent {
 class DefaultEventPlannerComponent(
     componentContext: ComponentContext,
     storeFactory: StoreFactory,
-    llmApi: LLMApi,
-    settingsRepository: SettingsRepository,
+    eventPlannerRepository: EventPlannerRepository,
+    sendMessageUseCase: SendEventPlanMessageUseCase,
+    startConversationUseCase: StartEventPlanConversationUseCase,
+    clearChatUseCase: ClearEventPlanChatUseCase,
     private val onNavigateBack: () -> Unit
 ) : EventPlannerComponent, ComponentContext by componentContext {
 
     private val store = instanceKeeper.getStore {
         EventPlannerStoreFactory(
             storeFactory = storeFactory,
-            llmApi = llmApi,
-            settingsRepository = settingsRepository
+            eventPlannerRepository = eventPlannerRepository,
+            sendMessageUseCase = sendMessageUseCase,
+            startConversationUseCase = startConversationUseCase,
+            clearChatUseCase = clearChatUseCase
         ).create()
     }
 

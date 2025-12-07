@@ -8,12 +8,15 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.mvikotlin.core.store.StoreFactory
-import data.network.LLMApi
 import data.repository.ChatRepository
+import data.repository.EventPlannerRepository
 import data.repository.SettingsRepository
 import domain.usecase.chat.ClearChatUseCase
 import domain.usecase.chat.SendMessageUseCase
 import domain.usecase.chat.SendSystemPromptUseCase
+import domain.usecase.eventplanner.ClearEventPlanChatUseCase
+import domain.usecase.eventplanner.SendEventPlanMessageUseCase
+import domain.usecase.eventplanner.StartEventPlanConversationUseCase
 import domain.usecase.recipe.GetRecipeUseCase
 import domain.usecase.settings.ResetSettingsUseCase
 import domain.usecase.settings.UpdateMaxTokensUseCase
@@ -42,8 +45,8 @@ interface RootComponent {
 class DefaultRootComponent(
     componentContext: ComponentContext,
     private val storeFactory: StoreFactory,
-    private val llmApi: LLMApi,
     private val chatRepository: ChatRepository,
+    private val eventPlannerRepository: EventPlannerRepository,
     private val settingsRepository: SettingsRepository,
     // Chat Use Cases
     private val sendMessageUseCase: SendMessageUseCase,
@@ -51,6 +54,10 @@ class DefaultRootComponent(
     private val clearChatUseCase: ClearChatUseCase,
     // Recipe Use Cases
     private val getRecipeUseCase: GetRecipeUseCase,
+    // EventPlanner Use Cases
+    private val sendEventPlanMessageUseCase: SendEventPlanMessageUseCase,
+    private val startEventPlanConversationUseCase: StartEventPlanConversationUseCase,
+    private val clearEventPlanChatUseCase: ClearEventPlanChatUseCase,
     // Settings Use Cases
     private val updateThemeUseCase: UpdateThemeUseCase,
     private val updateTemperatureUseCase: UpdateTemperatureUseCase,
@@ -103,8 +110,10 @@ class DefaultRootComponent(
                 DefaultEventPlannerComponent(
                     componentContext = componentContext,
                     storeFactory = storeFactory,
-                    llmApi = llmApi,
-                    settingsRepository = settingsRepository,
+                    eventPlannerRepository = eventPlannerRepository,
+                    sendMessageUseCase = sendEventPlanMessageUseCase,
+                    startConversationUseCase = startEventPlanConversationUseCase,
+                    clearChatUseCase = clearEventPlanChatUseCase,
                     onNavigateBack = ::navigateBack
                 )
             )

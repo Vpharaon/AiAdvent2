@@ -64,8 +64,8 @@ fun main() = application {
             }
         ) {
             // Repositories
-            val llmApi = koinInject<data.network.LLMApi>()
             val chatRepository = koinInject<data.repository.ChatRepository>()
+            val eventPlannerRepository = koinInject<data.repository.EventPlannerRepository>()
             val settingsRepository = koinInject<SettingsRepository>()
 
             // Chat Use Cases
@@ -75,6 +75,11 @@ fun main() = application {
 
             // Recipe Use Cases
             val getRecipeUseCase = koinInject<domain.usecase.recipe.GetRecipeUseCase>()
+
+            // EventPlanner Use Cases
+            val sendEventPlanMessageUseCase = koinInject<domain.usecase.eventplanner.SendEventPlanMessageUseCase>()
+            val startEventPlanConversationUseCase = koinInject<domain.usecase.eventplanner.StartEventPlanConversationUseCase>()
+            val clearEventPlanChatUseCase = koinInject<domain.usecase.eventplanner.ClearEventPlanChatUseCase>()
 
             // Settings Use Cases
             val updateThemeUseCase = koinInject<domain.usecase.settings.UpdateThemeUseCase>()
@@ -86,13 +91,16 @@ fun main() = application {
                 DefaultRootComponent(
                     componentContext = DefaultComponentContext(lifecycle = lifecycle),
                     storeFactory = DefaultStoreFactory(),
-                    llmApi = llmApi,
                     chatRepository = chatRepository,
+                    eventPlannerRepository = eventPlannerRepository,
                     settingsRepository = settingsRepository,
                     sendMessageUseCase = sendMessageUseCase,
                     sendSystemPromptUseCase = sendSystemPromptUseCase,
                     clearChatUseCase = clearChatUseCase,
                     getRecipeUseCase = getRecipeUseCase,
+                    sendEventPlanMessageUseCase = sendEventPlanMessageUseCase,
+                    startEventPlanConversationUseCase = startEventPlanConversationUseCase,
+                    clearEventPlanChatUseCase = clearEventPlanChatUseCase,
                     updateThemeUseCase = updateThemeUseCase,
                     updateTemperatureUseCase = updateTemperatureUseCase,
                     updateMaxTokensUseCase = updateMaxTokensUseCase,

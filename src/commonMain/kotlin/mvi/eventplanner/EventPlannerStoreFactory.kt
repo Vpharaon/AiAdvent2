@@ -5,31 +5,26 @@ import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
-import data.network.LLMApi
-import domain.util.StructuredResponseParser
-import domain.util.StructuredPromptBuilder
-import data.network.model.ChatMessage
-import data.network.model.MessageRole
-import data.repository.SettingsRepository
+import data.repository.EventPlannerRepository
 import domain.Message
 import domain.structured.EventPlanWithRaw
+import domain.usecase.eventplanner.ClearEventPlanChatUseCase
+import domain.usecase.eventplanner.SendEventPlanMessageUseCase
+import domain.usecase.eventplanner.StartEventPlanConversationUseCase
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import mvi.eventplanner.EventPlannerStore.EventPlanTab
 
+/**
+ * Factory для создания EventPlannerStore.
+ * Использует Use Cases для выполнения бизнес-логики.
+ */
 internal class EventPlannerStoreFactory(
     private val storeFactory: StoreFactory,
-    private val llmApi: LLMApi,
-    private val settingsRepository: SettingsRepository
+    private val eventPlannerRepository: EventPlannerRepository,
+    private val sendMessageUseCase: SendEventPlanMessageUseCase,
+    private val startConversationUseCase: StartEventPlanConversationUseCase,
+    private val clearChatUseCase: ClearEventPlanChatUseCase
 ) {
-    private val parser = StructuredResponseParser()
-    private val promptBuilder = StructuredPromptBuilder()
-    private val json = Json {
-        prettyPrint = true
-        ignoreUnknownKeys = true
-    }
-    private val conversationHistory = mutableListOf<ChatMessage>()
 
     fun create(): EventPlannerStore =
         object : EventPlannerStore,
@@ -63,6 +58,13 @@ internal class EventPlannerStoreFactory(
             super.executeAction(action)
             when (action) {
                 Action.InitAction -> {
+                    // Подписываемся на изменения сообщений
+                    scope.launch {
+                        eventPlannerRepository.messages.collect { messages ->
+                            dispatch(Message.MessagesUpdated(messages))
+                        }
+                    }
+
                     // Инициализируем диалог с системным промптом
                     scope.launch {
                         startConversation()
@@ -89,82 +91,26 @@ internal class EventPlannerStoreFactory(
                         dispatch(Message.TypingUpdated(true))
                         dispatch(Message.ErrorUpdated(null))
 
-                        try {
-                            // Добавляем сообщение пользователя в UI
-                            val userMessage = domain.Message(
-                                id = System.currentTimeMillis().toString(),
-                                content = messageText,
-                                role = MessageRole.USER.value,
-                                timestamp = System.currentTimeMillis()
-                            )
-                            dispatch(Message.MessagesUpdated(state().messages + userMessage))
+                        // Используем Use Case для отправки сообщения
+                        val result = sendMessageUseCase(messageText)
 
-                            // Добавляем в историю для API
-                            conversationHistory.add(
-                                ChatMessage(
-                                    role = MessageRole.USER,
-                                    content = messageText
-                                )
-                            )
-
-                            // Отправляем запрос
-                            val settings = settingsRepository.getCurrentSettings()
-                            val result = llmApi.sendMessage(
-                                messages = conversationHistory,
-                                temperature = settings.temperature,
-                                maxTokens = settings.maxTokens
-                            )
-
-                            result.onSuccess { response ->
-                                val assistantMessage = response.choices?.firstOrNull()?.message?.content
-
-                                if (assistantMessage != null) {
-                                    // Добавляем ответ в историю
-                                    conversationHistory.add(
-                                        ChatMessage(
-                                            role = MessageRole.ASSISTANT,
-                                            content = assistantMessage
-                                        )
-                                    )
-
-                                    // Добавляем ответ в UI
-                                    val assistantDomainMessage = domain.Message(
-                                        id = response.id.orEmpty(),
-                                        content = assistantMessage,
-                                        role = MessageRole.ASSISTANT.value,
-                                        timestamp = response.created ?: System.currentTimeMillis()
-                                    )
-                                    dispatch(Message.MessagesUpdated(state().messages + assistantDomainMessage))
-
-                                    // Пробуем распарсить plan
-                                    val parseResult = parser.parseEventPlanWithRaw(assistantMessage)
-                                    if (parseResult.isSuccess) {
-                                        val eventPlanData = parseResult.getOrNull()!!
-                                        val fullResponseJson = json.encodeToString(response)
-
-                                        dispatch(Message.EventPlanUpdated(eventPlanData.copy(fullResponseJson = fullResponseJson)))
-                                        dispatch(Message.TabSelected(EventPlanTab.PLAN))
-                                    }
-                                } else {
-                                    dispatch(Message.ErrorUpdated("Получен пустой ответ от сервера"))
-                                }
-                            }.onFailure { error ->
-                                dispatch(Message.ErrorUpdated("Ошибка: ${error.message}"))
-                                if (conversationHistory.isNotEmpty()) {
-                                    conversationHistory.removeAt(conversationHistory.size - 1)
-                                }
+                        result.onSuccess { eventPlanData ->
+                            // Если получен распарсенный план, обновляем состояние
+                            if (eventPlanData != null) {
+                                dispatch(Message.EventPlanUpdated(eventPlanData))
+                                dispatch(Message.TabSelected(EventPlanTab.PLAN))
                             }
-                        } catch (e: Exception) {
-                            dispatch(Message.ErrorUpdated("Ошибка: ${e.message}"))
-                        } finally {
-                            dispatch(Message.TypingUpdated(false))
+                        }.onFailure { error ->
+                            dispatch(Message.ErrorUpdated("Ошибка: ${error.message}"))
                         }
+
+                        dispatch(Message.TypingUpdated(false))
                     }
                 }
 
                 is EventPlannerStore.Intent.ClearChat -> {
-                    conversationHistory.clear()
-                    dispatch(Message.MessagesUpdated(emptyList()))
+                    // Используем Use Case для очистки
+                    clearChatUseCase()
                     dispatch(Message.InputUpdated(""))
                     dispatch(Message.EventPlanUpdated(null))
                     dispatch(Message.ErrorUpdated(null))
@@ -184,63 +130,16 @@ internal class EventPlannerStoreFactory(
         private suspend fun startConversation() {
             dispatch(Message.TypingUpdated(true))
 
-            try {
-                // Добавляем системный промпт
-                val systemPrompt = promptBuilder.buildEventPlannerPrompt()
-                conversationHistory.add(
-                    ChatMessage(
-                        role = MessageRole.SYSTEM,
-                        content = systemPrompt
-                    )
-                )
+            // Используем Use Case для инициализации диалога
+            val result = startConversationUseCase()
 
-                // Добавляем начальное сообщение пользователя
-                val initialUserMessage = "Hello! I would like to organize a New Year's corporate party for our company."
-                conversationHistory.add(
-                    ChatMessage(
-                        role = MessageRole.USER,
-                        content = initialUserMessage
-                    )
-                )
-
-                // Получаем первое сообщение от менеджера
-                val settings = settingsRepository.getCurrentSettings()
-                val result = llmApi.sendMessage(
-                    messages = conversationHistory,
-                    temperature = settings.temperature,
-                    maxTokens = settings.maxTokens
-                )
-
-                result.onSuccess { response ->
-                    val assistantMessage = response.choices?.firstOrNull()?.message?.content
-
-                    if (assistantMessage != null) {
-                        conversationHistory.add(
-                            ChatMessage(
-                                role = MessageRole.ASSISTANT,
-                                content = assistantMessage
-                            )
-                        )
-
-                        // Добавляем ответ в UI
-                        val assistantDomainMessage = domain.Message(
-                            id = response.id.orEmpty(),
-                            content = assistantMessage,
-                            role = MessageRole.ASSISTANT.value,
-                            timestamp = response.created ?: System.currentTimeMillis()
-                        )
-                        dispatch(Message.MessagesUpdated(listOf(assistantDomainMessage)))
-                    } else {
-                        dispatch(Message.ErrorUpdated("Не удалось получить приветствие от менеджера"))
-                    }
-                }.onFailure { error ->
-                    dispatch(Message.ErrorUpdated("Ошибка инициализации: ${error.message}"))
-                }
-            } catch (e: Exception) {
-                dispatch(Message.ErrorUpdated("Ошибка: ${e.message}"))
-            } finally {
-                dispatch(Message.TypingUpdated(false))
+            result.onSuccess {
+                // Сообщения уже добавлены через flow из Repository
+            }.onFailure { error ->
+                dispatch(Message.ErrorUpdated("Ошибка инициализации: ${error.message}"))
             }
+
+            dispatch(Message.TypingUpdated(false))
         }
     }
 
