@@ -13,7 +13,7 @@ class UpdateTemperatureUseCase(
     /**
      * Обновляет температуру генерации
      *
-     * @param temperature Температура (0.0 - 2.0)
+     * @param temperature Температура (0.0 - 1.0)
      * @return Result<Unit> - успех или ошибка
      */
     operator fun invoke(temperature: Double): Result<Unit> {
@@ -34,6 +34,6 @@ class UpdateTemperatureUseCase(
 
     companion object {
         private const val MIN_TEMPERATURE = 0.0
-        private const val MAX_TEMPERATURE = 2.0
+        private const val MAX_TEMPERATURE = 1.0
     }
 }

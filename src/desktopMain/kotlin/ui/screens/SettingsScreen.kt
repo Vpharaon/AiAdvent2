@@ -89,8 +89,8 @@ fun SettingsScreen(component: component.SettingsComponent) {
                 Slider(
                     value = settings.temperature.toFloat(),
                     onValueChange = { component.onTemperatureChange(it.toDouble()) },
-                    valueRange = 0f..2f,
-                    steps = 19
+                    valueRange = 0f..1f,
+                    steps = 9
                 )
                 Text(
                     text = "Более высокие значения делают ответы более случайными",

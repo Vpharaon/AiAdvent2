@@ -106,11 +106,16 @@ class EventPlannerRepositoryImpl(
                     )
 
                     // Добавляем ответ в UI
+                    // API возвращает timestamp в секундах, конвертируем в миллисекунды
+                    val timestampMillis = response.created?.let { seconds ->
+                        if (seconds < 10_000_000_000L) seconds * 1000 else seconds
+                    } ?: System.currentTimeMillis()
+
                     val assistantDomainMessage = Message(
                         id = response.id.orEmpty(),
                         content = assistantContent,
                         role = MessageRole.ASSISTANT.value,
-                        timestamp = response.created ?: System.currentTimeMillis()
+                        timestamp = timestampMillis
                     )
                     _messages.value += assistantDomainMessage
 
@@ -183,11 +188,16 @@ class EventPlannerRepositoryImpl(
                     )
 
                     // Добавляем ответ в UI
+                    // API возвращает timestamp в секундах, конвертируем в миллисекунды
+                    val timestampMillis = response.created?.let { seconds ->
+                        if (seconds < 10_000_000_000L) seconds * 1000 else seconds
+                    } ?: System.currentTimeMillis()
+
                     val assistantDomainMessage = Message(
                         id = response.id.orEmpty(),
                         content = assistantContent,
                         role = MessageRole.ASSISTANT.value,
-                        timestamp = response.created ?: System.currentTimeMillis()
+                        timestamp = timestampMillis
                     )
                     _messages.value = listOf(assistantDomainMessage)
 

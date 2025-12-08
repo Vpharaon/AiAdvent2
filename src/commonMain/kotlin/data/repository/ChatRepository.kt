@@ -135,11 +135,16 @@ class ChatRepositoryImpl(
         result.onSuccess { chatResponse ->
 
             val message = chatResponse.choices?.firstOrNull()?.message?.let {
+                // API возвращает timestamp в секундах, конвертируем в миллисекунды
+                val timestampMillis = chatResponse.created?.let { seconds ->
+                    if (seconds < 10_000_000_000L) seconds * 1000 else seconds
+                } ?: System.currentTimeMillis()
+
                 Message(
                     id = chatResponse.id.orEmpty(),
                     content = it.content.orEmpty(),
                     role = MessageRole.ASSISTANT.value,
-                    timestamp = chatResponse.created ?: System.currentTimeMillis()
+                    timestamp = timestampMillis
                 )
             }
 
