@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ui.components.InputArea
 import ui.components.MessagesArea
+import ui.components.ModelSidebar
 
 @Composable
 fun ChatScreen(component: component.ChatComponent) {
@@ -20,6 +21,8 @@ fun ChatScreen(component: component.ChatComponent) {
     val isTyping = state.isTyping
     val systemPrompt = state.systemPrompt
     val isEditorExpanded = state.isSystemPromptExpanded
+    val availableModels = state.availableModels
+    val selectedModel = state.selectedModel
 
     Column(
         modifier = Modifier
@@ -61,14 +64,22 @@ fun ChatScreen(component: component.ChatComponent) {
             }
         }
 
-        // Основной контент с разделением
+        // Основной контент с разделением на 3 панели
         Row(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Левая часть - чат
+            // Левая панель - список моделей (вертикальный) - всегда открыта
+            ModelSidebar(
+                models = availableModels,
+                selectedModel = selectedModel,
+                onModelSelect = component::onSelectLlmModel,
+                modifier = Modifier.width(280.dp).fillMaxHeight()
+            )
+
+            // Центральная часть - чат
             Column(
-                modifier = Modifier.weight(if (isEditorExpanded) 0.5f else 1f)
+                modifier = Modifier.weight(1f)
             ) {
                 // Область сообщений
                 MessagesArea(
@@ -90,10 +101,10 @@ fun ChatScreen(component: component.ChatComponent) {
                 )
             }
 
-            // Правая часть - редактор роли агента
+            // Правая панель - редактор роли агента
             if (isEditorExpanded) {
                 Card(
-                    modifier = Modifier.weight(0.5f).fillMaxHeight(),
+                    modifier = Modifier.width(400.dp).fillMaxHeight(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Column(

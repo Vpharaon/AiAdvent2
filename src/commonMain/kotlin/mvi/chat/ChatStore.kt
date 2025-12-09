@@ -1,6 +1,8 @@
 package mvi.chat
 
 import com.arkivanov.mvikotlin.core.store.Store
+import domain.LlmModel
+import domain.LlmModels
 import domain.Message
 
 interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> {
@@ -12,6 +14,7 @@ interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> 
         data class UpdateSystemPrompt(val systemPrompt: String) : Intent
         data object SaveSystemPrompt : Intent
         data object ToggleSystemPromptEditor : Intent
+        data class SelectLlmModel(val model: LlmModel) : Intent
     }
 
     sealed interface Label
@@ -21,6 +24,8 @@ interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> 
         val input: String = "",
         val isTyping: Boolean = false,
         val systemPrompt: String = "",
-        val isSystemPromptExpanded: Boolean = false
+        val isSystemPromptExpanded: Boolean = false,
+        val availableModels: List<LlmModel> = LlmModels.DEFAULT_MODELS,
+        val selectedModel: LlmModel = LlmModels.DEFAULT_MODELS.first()
     )
 }

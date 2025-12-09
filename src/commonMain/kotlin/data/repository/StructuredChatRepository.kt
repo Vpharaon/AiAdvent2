@@ -110,10 +110,13 @@ class StructuredChatRepositoryImpl(
         )
 
         val settings = settingsRepository.getCurrentSettings()
+        val selectedModel = settings.selectedLlmModel
         val response = remoteDataSource.sendMessages(
             messages = messages,
             temperature = 0.3, // Низкая температура для более детерминированных ответов
-            maxTokens = settings.maxTokens
+            maxTokens = settings.maxTokens,
+            apiUrl = selectedModel.apiUrl,
+            modelName = selectedModel.modelName
         )
 
         return response.fold(

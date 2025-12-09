@@ -126,10 +126,13 @@ class ChatRepositoryImpl(
      */
     private suspend fun sendMessage(messages: List<ChatMessage>) {
         val settings = settingsRepository.getCurrentSettings()
+        val selectedModel = settings.selectedLlmModel
         val result = remoteDataSource.sendMessages(
             messages = messages,
             temperature = settings.temperature,
-            maxTokens = settings.maxTokens
+            maxTokens = settings.maxTokens,
+            apiUrl = selectedModel.apiUrl,
+            modelName = selectedModel.modelName
         )
 
         result.onSuccess { chatResponse ->

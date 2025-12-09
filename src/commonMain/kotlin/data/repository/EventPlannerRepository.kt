@@ -86,10 +86,13 @@ class EventPlannerRepositoryImpl(
 
         // Отправляем запрос
         val settings = settingsRepository.getCurrentSettings()
+        val selectedModel = settings.selectedLlmModel
         val result = remoteDataSource.sendMessages(
             messages = conversationHistory,
             temperature = settings.temperature,
-            maxTokens = settings.maxTokens
+            maxTokens = settings.maxTokens,
+            apiUrl = selectedModel.apiUrl,
+            modelName = selectedModel.modelName
         )
 
         return result.fold(
@@ -169,10 +172,13 @@ class EventPlannerRepositoryImpl(
 
         // Получаем первое сообщение от менеджера
         val settings = settingsRepository.getCurrentSettings()
+        val selectedModel = settings.selectedLlmModel
         val result = remoteDataSource.sendMessages(
             messages = conversationHistory,
             temperature = settings.temperature,
-            maxTokens = settings.maxTokens
+            maxTokens = settings.maxTokens,
+            apiUrl = selectedModel.apiUrl,
+            modelName = selectedModel.modelName
         )
 
         return result.fold(

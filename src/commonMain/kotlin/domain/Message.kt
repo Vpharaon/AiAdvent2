@@ -10,13 +10,15 @@ import kotlinx.serialization.Serializable
  * @property content Текст сообщения
  * @property timestamp Временная метка отправки сообщения (в миллисекундах с эпохи Unix)
  * @property role Роль отправителя сообщения (system, user, assistant)
+ * @property responseTimeMs Время ответа модели в миллисекундах (только для сообщений ассистента)
  */
 @Serializable
 data class Message(
     val id: String,
     val content: String,
     val timestamp: Long,
-    val role: String
+    val role: String,
+    val responseTimeMs: Long? = null
 ) {
     /**
      * Проверяет, является ли сообщение от пользователя

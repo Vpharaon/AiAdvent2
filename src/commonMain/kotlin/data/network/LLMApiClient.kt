@@ -17,10 +17,17 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 class LLMApiClient(
-    private val apiKey: String,
-    private val apiUrl: String = "https://api.z.ai/api/paas/v4/chat/completions",
-    private val model: String = "glm-4.6"
+    private val apiKeys: Map<String, String>
 ) : LLMApi {
+
+    /**
+     * Определяет правильный API ключ на основе URL используя LlmProvider
+     */
+    private fun getApiKeyForUrl(apiUrl: String): String {
+        val provider = domain.LlmProvider.fromUrl(apiUrl)
+        return provider?.let { apiKeys[it.apiKeyName] } ?: apiKeys["glm"] ?: ""
+    }
+
     private val client = HttpClient {
         install(ContentNegotiation) {
             json(Json {
@@ -50,19 +57,24 @@ class LLMApiClient(
     override suspend fun sendMessage(
         messages: List<ChatMessage>,
         temperature: Double?,
-        maxTokens: Int?
+        maxTokens: Int?,
+        apiUrl: String,
+        modelName: String
     ): Result<ChatResponse> {
         return try {
             val request = ChatRequest(
-                model = model,
+                model = modelName,
                 messages = messages,
                 temperature = temperature,
                 max_tokens = maxTokens
             )
 
+            // Получаем правильный API ключ для данного URL
+            val selectedApiKey = getApiKeyForUrl(apiUrl)
+
             val httpResponse = client.post(apiUrl) {
                 contentType(ContentType.Application.Json)
-                header("Authorization", "Bearer $apiKey")
+                header("Authorization", "Bearer $selectedApiKey")
                 setBody(request)
             }
 

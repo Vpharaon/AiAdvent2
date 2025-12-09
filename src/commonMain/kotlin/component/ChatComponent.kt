@@ -5,6 +5,7 @@ import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
 import data.repository.ChatRepository
+import domain.LlmModel
 import domain.usecase.chat.ClearChatUseCase
 import domain.usecase.chat.SendMessageUseCase
 import domain.usecase.chat.SendSystemPromptUseCase
@@ -22,6 +23,7 @@ interface ChatComponent {
     fun onSystemPromptChange(systemPrompt: String)
     fun onSaveSystemPromptClick()
     fun onToggleSystemPromptEditor()
+    fun onSelectLlmModel(model: LlmModel)
     fun onBackClick()
     fun onSettingsClick()
 }
@@ -33,6 +35,7 @@ class DefaultChatComponent(
     sendMessageUseCase: SendMessageUseCase,
     sendSystemPromptUseCase: SendSystemPromptUseCase,
     clearChatUseCase: ClearChatUseCase,
+    settingsRepository: data.repository.SettingsRepository,
     private val onNavigateBack: () -> Unit,
     private val onNavigateToSettings: () -> Unit
 ) : ChatComponent, ComponentContext by componentContext {
@@ -43,7 +46,8 @@ class DefaultChatComponent(
             chatRepository = chatRepository,
             sendMessageUseCase = sendMessageUseCase,
             sendSystemPromptUseCase = sendSystemPromptUseCase,
-            clearChatUseCase = clearChatUseCase
+            clearChatUseCase = clearChatUseCase,
+            settingsRepository = settingsRepository
         ).create()
     }
 
@@ -72,6 +76,10 @@ class DefaultChatComponent(
 
     override fun onToggleSystemPromptEditor() {
         store.accept(ChatStore.Intent.ToggleSystemPromptEditor)
+    }
+
+    override fun onSelectLlmModel(model: LlmModel) {
+        store.accept(ChatStore.Intent.SelectLlmModel(model))
     }
 
     override fun onBackClick() {

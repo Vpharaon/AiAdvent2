@@ -44,11 +44,34 @@ fun main() = application {
     val localProperties = loadLocalProperties()
 
     // Получаем GLM API ключ из local.properties или из переменной окружения
-    val apiKey = localProperties.getProperty("glm.api.key")
+    val glmApiKey = localProperties.getProperty("glm.api.key")
         ?: System.getenv("GLM_API_KEY")
         ?: throw IllegalStateException(
             "GLM API key not found! Please set it in local.properties (glm.api.key) or as environment variable (GLM_API_KEY)"
         )
+
+    // Получаем OpenRouter API ключ из local.properties или из переменной окружения
+    val openRouterApiKey = localProperties.getProperty("openrouter.api.key")
+        ?: System.getenv("OPENROUTER_API_KEY")
+        ?: ""
+
+    // Получаем OpenAI API ключ из local.properties или из переменной окружения
+    val openAiApiKey = localProperties.getProperty("openai.api.key")
+        ?: System.getenv("OPENAI_API_KEY")
+        ?: ""
+
+    // Получаем DeepSeek API ключ из local.properties или из переменной окружения
+    val deepSeekApiKey = localProperties.getProperty("deepseek.api.key")
+        ?: System.getenv("DEEPSEEK_API_KEY")
+        ?: ""
+
+    // Создаем Map с ключами для разных провайдеров
+    val apiKeys = mapOf(
+        "glm" to glmApiKey,
+        "openrouter" to openRouterApiKey,
+        "openai" to openAiApiKey,
+        "deepseek" to deepSeekApiKey
+    )
 
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val lifecycle = LifecycleRegistry()
@@ -60,7 +83,7 @@ fun main() = application {
     ) {
         KoinApplication(
             application = {
-                modules(appModule(apiKey, appScope))
+                modules(appModule(apiKeys, appScope))
             }
         ) {
             // Repositories

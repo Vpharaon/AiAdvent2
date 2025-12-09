@@ -1,6 +1,7 @@
 package data.repository
 
 import domain.AppSettings
+import domain.LlmModel
 import domain.Theme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,9 +17,15 @@ interface SettingsRepository {
     val settings: StateFlow<AppSettings>
 
     /**
-     * Обновляет настройки модели LLM
+     * Обновляет настройки модели LLM (deprecated)
      */
+    @Deprecated("Use updateSelectedLlmModel instead")
     fun updateModel(model: String)
+
+    /**
+     * Обновляет выбранную LLM модель
+     */
+    fun updateSelectedLlmModel(model: LlmModel)
 
     /**
      * Обновляет температуру генерации
@@ -56,10 +63,18 @@ class SettingsRepositoryImpl : SettingsRepository {
     override val settings: StateFlow<AppSettings> = _settings.asStateFlow()
 
     /**
-     * Обновляет настройки модели LLM.
+     * Обновляет настройки модели LLM (deprecated).
      */
+    @Deprecated("Use updateSelectedLlmModel instead")
     override fun updateModel(model: String) {
         _settings.value = _settings.value.copy(model = model)
+    }
+
+    /**
+     * Обновляет выбранную LLM модель.
+     */
+    override fun updateSelectedLlmModel(model: LlmModel) {
+        _settings.value = _settings.value.copy(selectedLlmModel = model)
     }
 
     /**

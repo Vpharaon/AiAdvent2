@@ -94,6 +94,7 @@ class DefaultRootComponent(
                     sendMessageUseCase = sendMessageUseCase,
                     sendSystemPromptUseCase = sendSystemPromptUseCase,
                     clearChatUseCase = clearChatUseCase,
+                    settingsRepository = settingsRepository,
                     onNavigateBack = ::navigateBack,
                     onNavigateToSettings = ::navigateToSettings
                 )

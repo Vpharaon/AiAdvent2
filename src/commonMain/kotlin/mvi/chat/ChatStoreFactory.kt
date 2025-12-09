@@ -21,7 +21,8 @@ internal class ChatStoreFactory(
     private val chatRepository: ChatRepository,
     private val sendMessageUseCase: SendMessageUseCase,
     private val sendSystemPromptUseCase: SendSystemPromptUseCase,
-    private val clearChatUseCase: ClearChatUseCase
+    private val clearChatUseCase: ClearChatUseCase,
+    private val settingsRepository: data.repository.SettingsRepository
 ) {
 
     sealed interface Action {
@@ -45,6 +46,7 @@ internal class ChatStoreFactory(
         data class TypingUpdated(val isTyping: Boolean) : Message
         data class SystemPromptUpdated(val systemPrompt: String) : Message
         data class SystemPromptExpandedUpdated(val isExpanded: Boolean) : Message
+        data class SelectedModelUpdated(val model: domain.LlmModel) : Message
     }
 
     private inner class ExecutorImpl :
@@ -128,6 +130,14 @@ internal class ChatStoreFactory(
                         message = SystemPromptExpandedUpdated(isExpanded = !state().isSystemPromptExpanded)
                     )
                 }
+
+                is ChatStore.Intent.SelectLlmModel -> {
+                    // Сохраняем выбранную модель в настройках
+                    settingsRepository.updateSelectedLlmModel(intent.model)
+                    dispatch(
+                        message = SelectedModelUpdated(model = intent.model)
+                    )
+                }
             }
         }
     }
@@ -140,6 +150,7 @@ internal class ChatStoreFactory(
                 is TypingUpdated -> copy(isTyping = msg.isTyping)
                 is SystemPromptUpdated -> copy(systemPrompt = msg.systemPrompt)
                 is SystemPromptExpandedUpdated -> copy(isSystemPromptExpanded = msg.isExpanded)
+                is SelectedModelUpdated -> copy(selectedModel = msg.model)
             }
     }
 

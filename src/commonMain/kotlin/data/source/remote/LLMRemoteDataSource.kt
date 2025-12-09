@@ -14,11 +14,15 @@ interface LLMRemoteDataSource {
      * @param messages Список сообщений для отправки
      * @param temperature Температура генерации (0.0 - 2.0)
      * @param maxTokens Максимальное количество токенов (null для автоопределения)
+     * @param apiUrl URL эндпоинта API
+     * @param modelName Название модели для использования
      * @return Result с ответом от LLM или ошибкой
      */
     suspend fun sendMessages(
         messages: List<ChatMessage>,
         temperature: Double,
-        maxTokens: Int?
+        maxTokens: Int?,
+        apiUrl: String,
+        modelName: String
     ): Result<ChatResponse>
 }

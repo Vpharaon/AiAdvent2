@@ -20,13 +20,17 @@ class LLMRemoteDataSourceImpl(
     override suspend fun sendMessages(
         messages: List<ChatMessage>,
         temperature: Double,
-        maxTokens: Int?
+        maxTokens: Int?,
+        apiUrl: String,
+        modelName: String
     ): Result<ChatResponse> {
         return try {
             llmApi.sendMessage(
                 messages = messages,
                 temperature = temperature,
-                maxTokens = maxTokens
+                maxTokens = maxTokens,
+                apiUrl = apiUrl,
+                modelName = modelName
             )
         } catch (e: Exception) {
             Result.failure(e)

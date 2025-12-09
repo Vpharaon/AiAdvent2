@@ -27,12 +27,12 @@ import domain.usecase.settings.UpdateModelUseCase
 import domain.usecase.settings.UpdateTemperatureUseCase
 import domain.usecase.settings.UpdateThemeUseCase
 
-fun appModule(apiKey: String, coroutineScope: CoroutineScope) = module {
+fun appModule(apiKeys: Map<String, String>, coroutineScope: CoroutineScope) = module {
     // Settings Repository
     single<SettingsRepository> { SettingsRepositoryImpl() }
 
     // LLM API Client
-    single<LLMApi> { LLMApiClient(apiKey = apiKey) }
+    single<LLMApi> { LLMApiClient(apiKeys = apiKeys) }
 
     // Data Sources
     single<LLMRemoteDataSource> { LLMRemoteDataSourceImpl(llmApi = get()) }

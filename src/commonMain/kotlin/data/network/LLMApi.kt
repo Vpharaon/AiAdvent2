@@ -15,13 +15,17 @@ interface LLMApi {
      * @param messages Список сообщений, составляющих диалог.
      * @param temperature Температура генерации (0.0 - 2.0)
      * @param maxTokens Максимальное количество токенов
+     * @param apiUrl URL эндпоинта API
+     * @param modelName Название модели для использования
      * @return [Result], содержащий либо [ChatResponse] в случае успеха,
      *         либо [ApiError] в случае ошибки.
      */
     suspend fun sendMessage(
         messages: List<ChatMessage>,
         temperature: Double? = null,
-        maxTokens: Int? = null
+        maxTokens: Int? = null,
+        apiUrl: String,
+        modelName: String
     ): Result<ChatResponse>
 
     /**

@@ -1,6 +1,21 @@
-# Local Configuration
-# Скопируйте этот файл как local.properties и заполните своими значениями
+# API Keys Configuration
+# Скопируйте этот файл в local.properties и добавьте свои ключи
 
-# GLM API ключ от Zhipu AI
-# Получите ключ на https://open.bigmodel.cn/
-glm.api.key=your-glm-api-key-here
+# GLM API Key (обязательный)
+# Получить можно на https://bigmodel.cn/
+glm.api.key=YOUR_GLM_API_KEY_HERE
+
+# OpenRouter API Key (опционально)
+# Получить можно на https://openrouter.ai/
+# Необходим для моделей: GPT-4 Turbo, Claude 3 Opus, Claude 3 Sonnet, Gemini Pro, Mistral Large, Llama 3 70B
+openrouter.api.key=YOUR_OPENROUTER_API_KEY_HERE
+
+# OpenAI API Key (опционально)
+# Получить можно на https://platform.openai.com/
+# Необходим для модели: GPT-3.5 Turbo
+openai.api.key=YOUR_OPENAI_API_KEY_HERE
+
+# DeepSeek API Key (опционально)
+# Получить можно на https://platform.deepseek.com/
+# Необходим для моделей: DeepSeek Chat, DeepSeek Coder
+deepseek.api.key=YOUR_DEEPSEEK_API_KEY_HERE
