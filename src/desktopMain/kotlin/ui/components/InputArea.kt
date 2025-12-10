@@ -12,26 +12,74 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 
+/**
+ * Область ввода сообщения с кнопками управления и отображением статистики токенов.
+ *
+ * Компонент предоставляет текстовое поле для ввода сообщений пользователем,
+ * кнопки отправки и очистки чата, а также отображает статистику использования токенов.
+ *
+ * Особенности:
+ * - Поддержка многострочного ввода (до 4 строк)
+ * - Отправка сообщения по нажатию Enter (Shift+Enter для новой строки)
+ * - Отображение количества токенов в текущем вводе
+ * - Отображение общей статистики токенов по всем сообщениям
+ *
+ * @param input Текст текущего ввода пользователя
+ * @param onInputChange Callback, вызываемый при изменении текста ввода
+ * @param onSendClick Callback, вызываемый при нажатии кнопки "Отправить"
+ * @param onClearClick Callback, вызываемый при нажатии кнопки "Очистить чат"
+ * @param tokenCount Количество токенов в текущем вводе (null если не посчитано)
+ * @param totalPromptTokens Общее количество токенов во всех промптах (запросах)
+ * @param totalCompletionTokens Общее количество токенов во всех ответах
+ * @param totalTokens Общее количество токенов (промпты + ответы)
+ */
 @Composable
 fun InputArea(
     input: String,
     onInputChange: (String) -> Unit,
     onSendClick: () -> Unit,
     onClearClick: () -> Unit,
-    tokenCount: Int? = null
+    tokenCount: Int? = null,
+    totalPromptTokens: Int = 0,
+    totalCompletionTokens: Int = 0,
+    totalTokens: Int = 0
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        // Отображение количества токенов
-        if (tokenCount != null && tokenCount > 0) {
-            Text(
-                text = "Токенов: $tokenCount",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 4.dp)
-            )
+        // Отображение статистики токенов
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Токены текущего ввода
+            if (tokenCount != null && tokenCount > 0) {
+                Text(
+                    text = "Токенов в вводе: $tokenCount",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            // Общая статистика токенов
+            if (totalTokens > 0) {
+                Text(
+                    text = "Всего токенов: $totalTokens",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Запросы: $totalPromptTokens",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Ответы: $totalCompletionTokens",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         Row(

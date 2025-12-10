@@ -33,7 +33,11 @@ fun SettingsScreen(component: component.SettingsComponent) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 IconButton(onClick = component::onBackClick) {
-                    Text("←", style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        text = "←",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
                 Text(
                     text = "Настройки",

@@ -14,6 +14,30 @@ import ui.components.InputArea
 import ui.components.MessagesArea
 import ui.components.ModelSidebar
 
+/**
+ * Главный экран чата приложения.
+ *
+ * Отображает полнофункциональный интерфейс чата с AI ассистентом, включающий:
+ * - Левую панель выбора LLM модели (280dp)
+ * - Центральную область с историей сообщений и полем ввода
+ * - Правую панель выбора агента/роли (320dp)
+ * - Заголовок с кнопкой настроек
+ *
+ * Архитектура:
+ * - Использует MVI паттерн через ChatComponent
+ * - Reactive UI с collectAsState для отслеживания изменений состояния
+ * - Трехпанельный layout с фиксированными боковыми панелями
+ *
+ * Функциональность:
+ * - Отправка и получение сообщений
+ * - Переключение между LLM моделями
+ * - Выбор предустановленных агентов (менеджер ресторана, шеф-повар, и т.д.)
+ * - Отображение статистики использования токенов
+ * - Очистка истории чата
+ * - Переход в настройки
+ *
+ * @param component Компонент чата, управляющий состоянием и бизнес-логикой экрана
+ */
 @Composable
 fun ChatScreen(component: component.ChatComponent) {
     val state by component.state.collectAsState()
@@ -25,6 +49,9 @@ fun ChatScreen(component: component.ChatComponent) {
     val availableAgents = state.availableAgents
     val selectedAgent = state.selectedAgent
     val inputTokenCount = state.inputTokenCount
+    val totalPromptTokens = state.totalPromptTokens
+    val totalCompletionTokens = state.totalCompletionTokens
+    val totalTokens = state.totalTokens
 
     Column(
         modifier = Modifier
@@ -44,7 +71,11 @@ fun ChatScreen(component: component.ChatComponent) {
                 color = MaterialTheme.colorScheme.onBackground
             )
             IconButton(onClick = component::onSettingsClick) {
-                Text("⚙️", style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = "⚙️",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
 
@@ -82,7 +113,10 @@ fun ChatScreen(component: component.ChatComponent) {
                     onInputChange = component::onInputChange,
                     onSendClick = component::onSendClick,
                     onClearClick = component::onClearClick,
-                    tokenCount = inputTokenCount
+                    tokenCount = inputTokenCount,
+                    totalPromptTokens = totalPromptTokens,
+                    totalCompletionTokens = totalCompletionTokens,
+                    totalTokens = totalTokens
                 )
             }
 

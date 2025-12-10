@@ -109,6 +109,7 @@ private fun AgentCard(
             Text(
                 text = agent.icon,
                 style = MaterialTheme.typography.headlineMedium,
+                color = textColor,
                 modifier = Modifier.padding(top = 4.dp)
             )
 

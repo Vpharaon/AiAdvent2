@@ -26,6 +26,9 @@ interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> 
         val selectedModel: LlmModel = LlmModels.DEFAULT_MODELS.first(),
         val availableAgents: List<Agent> = Agent.getAll(),
         val selectedAgent: Agent? = Agent.GENERAL_ASSISTANT,
-        val inputTokenCount: Int? = null
+        val inputTokenCount: Int? = null,
+        val totalPromptTokens: Int = 0,
+        val totalCompletionTokens: Int = 0,
+        val totalTokens: Int = 0
     )
 }

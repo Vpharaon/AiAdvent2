@@ -222,7 +222,7 @@ object LlmModels {
         OPENROUTER_LLAMA_3_70B
     )
 
-    val CUSTOM_MODELS = FREE_MODELS + listOf(GLM_4_6)
+    val CUSTOM_MODELS = listOf(GLM_4_6, DEEPSEEK_CHAT)
 
     /**
      * Список всех доступных моделей по умолчанию (только бесплатные).

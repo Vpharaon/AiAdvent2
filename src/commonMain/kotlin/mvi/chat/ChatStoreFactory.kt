@@ -178,7 +178,19 @@ internal class ChatStoreFactory(
     private object ReducerImpl : Reducer<ChatStore.State, Message> {
         override fun ChatStore.State.reduce(msg: Message): ChatStore.State =
             when (msg) {
-                is MessagesUpdated -> copy(messages = msg.messages)
+                is MessagesUpdated -> {
+                    // Подсчитываем общую статистику токенов по всем сообщениям
+                    val totalPrompt = msg.messages.sumOf { it.promptTokens ?: 0 }
+                    val totalCompletion = msg.messages.sumOf { it.completionTokens ?: 0 }
+                    val total = msg.messages.sumOf { it.totalTokens ?: 0 }
+
+                    copy(
+                        messages = msg.messages,
+                        totalPromptTokens = totalPrompt,
+                        totalCompletionTokens = totalCompletion,
+                        totalTokens = total
+                    )
+                }
                 is InputUpdated -> copy(input = msg.text)
                 is TypingUpdated -> copy(isTyping = msg.isTyping)
                 is SelectedModelUpdated -> copy(selectedModel = msg.model)
