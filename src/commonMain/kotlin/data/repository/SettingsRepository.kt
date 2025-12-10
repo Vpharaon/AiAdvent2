@@ -24,15 +24,6 @@ interface SettingsRepository {
     val settings: StateFlow<AppSettings>
 
     /**
-     * Обновляет настройки модели LLM (устаревший метод).
-     *
-     * @param model Название модели (например, "glm-4.6")
-     * @deprecated Используйте updateSelectedLlmModel для работы с полной моделью
-     */
-    @Deprecated("Use updateSelectedLlmModel instead")
-    fun updateModel(model: String)
-
-    /**
      * Обновляет выбранную LLM модель.
      *
      * Изменяет модель, используемую для генерации ответов. Модель содержит
@@ -120,16 +111,6 @@ class SettingsRepositoryImpl : SettingsRepository {
 
     // Неизменяемый поток для внешнего доступа (read-only)
     override val settings: StateFlow<AppSettings> = _settings.asStateFlow()
-
-    /**
-     * Обновляет название модели (устаревший метод).
-     *
-     * @param model Название модели
-     */
-    @Deprecated("Use updateSelectedLlmModel instead")
-    override fun updateModel(model: String) {
-        _settings.value = _settings.value.copy(model = model)
-    }
 
     /**
      * Обновляет выбранную LLM модель.

@@ -9,8 +9,6 @@ import kotlinx.serialization.Serializable
  * и внешний вид приложения. Настройки сохраняются локально и восстанавливаются
  * при следующем запуске приложения.
  *
- * @property model Название модели LLM для использования (например, "glm-4.5-air")
- *                 @Deprecated Используйте selectedLlmModel вместо этого поля
  * @property selectedLlmModel Выбранная LLM модель со всеми параметрами (URL, API ключ, название).
  *                            По умолчанию используется бесплатная модель Mistral Devstral
  * @property temperature Температура для генерации текста (0.0 - 1.0).
@@ -33,9 +31,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class AppSettings(
-    @Deprecated("Use selectedLlmModel instead")
-    val model: String = "glm-4.6",
-    val selectedLlmModel: LlmModel = LlmModels.FREE_MISTRALAI_DEVSTRAL_2512,
+    val selectedLlmModel: LlmModel = LlmModels.DEFAULT_MODELS.first(),
     val temperature: Double = 1.0,
     val maxTokens: Int? = null,
     val theme: Theme = Theme.LIGHT

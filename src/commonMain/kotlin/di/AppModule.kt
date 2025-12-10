@@ -13,7 +13,6 @@ import domain.usecase.chat.SendMessageUseCase
 import domain.usecase.chat.SendSystemPromptUseCase
 import domain.usecase.settings.ResetSettingsUseCase
 import domain.usecase.settings.UpdateMaxTokensUseCase
-import domain.usecase.settings.UpdateModelUseCase
 import domain.usecase.settings.UpdateTemperatureUseCase
 import domain.usecase.settings.UpdateThemeUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -74,10 +73,6 @@ fun appModule(apiKeys: Map<String, String>, coroutineScope: CoroutineScope) = mo
 
     factory {
         UpdateMaxTokensUseCase(settingsRepository = get())
-    }
-
-    factory {
-        UpdateModelUseCase(settingsRepository = get())
     }
 
     factory {

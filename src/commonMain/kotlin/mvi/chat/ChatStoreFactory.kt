@@ -16,6 +16,51 @@ import mvi.chat.ChatStoreFactory.Message.*
 /**
  * Factory для создания ChatStore.
  * Использует Use Cases для выполнения бизнес-логики.
+ *
+ * ## Управление жизненным циклом запросов к LLM
+ *
+ * Данная реализация обеспечивает корректную отмену активных запросов к LLM при:
+ * - Очистке чата (ClearChat)
+ * - Смене агента (SelectAgent)
+ * - Отправке нового сообщения (SendMessage)
+ *
+ * ### Архитектура отмены запросов:
+ *
+ * 1. **Job tracking**: Каждый активный запрос к LLM отслеживается через `activeRequestJob`.
+ *    Это позволяет в любой момент отменить запрос вызовом `Job.cancel()`.
+ *
+ * 2. **Автоматическая отмена**: Метод `executeLLMRequest()` автоматически отменяет
+ *    предыдущий запрос перед запуском нового. Это гарантирует, что:
+ *    - В любой момент времени выполняется максимум один запрос к LLM
+ *    - Результаты отмененных запросов не попадают в UI
+ *    - Состояние загрузки (isTyping) всегда корректно
+ *
+ * 3. **Кооперативная отмена**: Kotlin coroutines поддерживают кооперативную отмену.
+ *    При вызове `Job.cancel()`:
+ *    - Корутина получает CancellationException при следующей suspend точке
+ *    - Ktor HttpClient автоматически прерывает HTTP запрос
+ *    - finally блок гарантирует сброс состояния загрузки
+ *
+ * 4. **Цепочка отмены**: Отмена распространяется через всю цепочку вызовов:
+ *    ChatStoreFactory → Use Case → Repository → DataSource → API Client
+ *
+ * ### Пример использования:
+ *
+ * ```kotlin
+ * // Пользователь отправляет сообщение
+ * executeLLMRequest {
+ *     sendMessageUseCase("Hello")  // Запрос 1 начинается
+ * }
+ *
+ * // Пользователь очищает чат до завершения Запроса 1
+ * cancelActiveRequest()  // Запрос 1 отменяется
+ * clearChatUseCase()
+ *
+ * // Результат Запроса 1 никогда не попадет в UI
+ * ```
+ *
+ * @see executeLLMRequest Безопасное выполнение запросов с автоматической отменой
+ * @see cancelActiveRequest Явная отмена активного запроса
  */
 internal class ChatStoreFactory(
     private val storeFactory: StoreFactory,
@@ -48,6 +93,7 @@ internal class ChatStoreFactory(
         data class SelectedModelUpdated(val model: domain.LlmModel) : Message
         data class SelectedAgentUpdated(val agent: domain.Agent?) : Message
         data class TokenCountUpdated(val tokenCount: Int?) : Message
+        data object CleanTokensCount : Message
     }
 
     private inner class ExecutorImpl :
@@ -55,6 +101,50 @@ internal class ChatStoreFactory(
 
         // Получаем TokenCounter при инициализации (может быть null на платформах без поддержки)
         private val tokenCounter = getTokenCounter()
+
+        /**
+         * Job активного запроса к LLM.
+         * Используется для отмены запроса при очистке чата или смене агента.
+         */
+        private var activeRequestJob: kotlinx.coroutines.Job? = null
+
+        /**
+         * Отменяет активный запрос к LLM, если он существует.
+         * Также сбрасывает состояние загрузки.
+         */
+        private fun cancelActiveRequest() {
+            activeRequestJob?.cancel()
+            activeRequestJob = null
+            dispatch(TypingUpdated(false))
+        }
+
+        /**
+         * Безопасно выполняет запрос к LLM с управлением состоянием загрузки.
+         * Автоматически отменяет предыдущий запрос, если он еще выполняется.
+         *
+         * @param block Suspend функция, которая выполняет запрос
+         */
+        private fun executeLLMRequest(block: suspend () -> Unit) {
+            // Отменяем предыдущий запрос, если он еще выполняется
+            cancelActiveRequest()
+
+            // Запускаем новый запрос
+            activeRequestJob = scope.launch {
+                dispatch(TypingUpdated(true))
+                try {
+                    block()
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    // Запрос был отменен - это нормально, не логируем
+                    println("Запрос отменен")
+                } catch (e: Exception) {
+                    // Неожиданная ошибка
+                    println("Неожиданная ошибка при выполнении запроса: ${e.message}")
+                } finally {
+                    // Всегда сбрасываем состояние загрузки
+                    dispatch(TypingUpdated(false))
+                }
+            }
+        }
 
         override fun executeAction(action: Action) {
             super.executeAction(action)
@@ -102,19 +192,19 @@ internal class ChatStoreFactory(
                     dispatch(InputUpdated(""))
                     dispatch(TokenCountUpdated(null))
 
-                    scope.launch {
-                        dispatch(TypingUpdated(true))
-                        // Используем Use Case с обработкой Result
+                    // Используем безопасный wrapper для выполнения запроса
+                    executeLLMRequest {
                         sendMessageUseCase(messageText)
                             .onFailure { error ->
-                                // Логируем ошибку (в production можно добавить аналитику)
                                 println("Ошибка отправки сообщения: ${error.message}")
                             }
-                        dispatch(TypingUpdated(false))
                     }
                 }
 
                 is ChatStore.Intent.ClearChat -> {
+                    // КРИТИЧНО: Отменяем активный запрос перед очисткой чата
+                    cancelActiveRequest()
+
                     // Используем Use Case для очистки с обработкой Result
                     clearChatUseCase()
                         .onFailure { error ->
@@ -122,21 +212,23 @@ internal class ChatStoreFactory(
                         }
                     dispatch(InputUpdated(""))
                     dispatch(TokenCountUpdated(null))
+                    dispatch(CleanTokensCount)
 
                     // Если выбран агент, отправляем его системный промпт
                     state().selectedAgent?.let { agent ->
-                        scope.launch {
-                            dispatch(TypingUpdated(true))
+                        executeLLMRequest {
                             sendSystemPromptUseCase(agent.systemPrompt)
                                 .onFailure { error ->
                                     println("Ошибка отправки системного промпта: ${error.message}")
                                 }
-                            dispatch(TypingUpdated(false))
                         }
                     }
                 }
 
                 is ChatStore.Intent.SelectAgent -> {
+                    // КРИТИЧНО: Отменяем активный запрос перед сменой агента
+                    cancelActiveRequest()
+
                     // Очищаем чат при смене агента с обработкой Result
                     clearChatUseCase()
                         .onFailure { error ->
@@ -147,13 +239,11 @@ internal class ChatStoreFactory(
                     dispatch(SelectedAgentUpdated(intent.agent))
 
                     // Отправляем системный промпт выбранного агента
-                    scope.launch {
-                        dispatch(TypingUpdated(true))
+                    executeLLMRequest {
                         sendSystemPromptUseCase(intent.agent.systemPrompt)
                             .onFailure { error ->
                                 println("Ошибка отправки системного промпта агента: ${error.message}")
                             }
-                        dispatch(TypingUpdated(false))
                     }
                 }
 
@@ -196,6 +286,11 @@ internal class ChatStoreFactory(
                 is SelectedModelUpdated -> copy(selectedModel = msg.model)
                 is SelectedAgentUpdated -> copy(selectedAgent = msg.agent)
                 is TokenCountUpdated -> copy(inputTokenCount = msg.tokenCount)
+                CleanTokensCount -> copy(
+                    totalPromptTokens = 0,
+                    totalCompletionTokens = 0,
+                    totalTokens = 0
+                )
             }
     }
 
