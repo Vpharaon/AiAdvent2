@@ -9,15 +9,10 @@ import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import data.repository.ChatRepository
-import data.repository.EventPlannerRepository
 import data.repository.SettingsRepository
 import domain.usecase.chat.ClearChatUseCase
 import domain.usecase.chat.SendMessageUseCase
 import domain.usecase.chat.SendSystemPromptUseCase
-import domain.usecase.eventplanner.ClearEventPlanChatUseCase
-import domain.usecase.eventplanner.SendEventPlanMessageUseCase
-import domain.usecase.eventplanner.StartEventPlanConversationUseCase
-import domain.usecase.recipe.GetRecipeUseCase
 import domain.usecase.settings.ResetSettingsUseCase
 import domain.usecase.settings.UpdateMaxTokensUseCase
 import domain.usecase.settings.UpdateTemperatureUseCase
@@ -27,17 +22,11 @@ import kotlinx.serialization.Serializable
 interface RootComponent {
     val stack: Value<ChildStack<*, Child>>
 
-    fun navigateToChat()
-    fun navigateToRecipes()
-    fun navigateToEventPlanner()
     fun navigateToSettings()
     fun navigateBack()
 
     sealed class Child {
-        data class Home(val component: HomeComponent) : Child()
         data class Chat(val component: ChatComponent) : Child()
-        data class Recipe(val component: RecipeComponent) : Child()
-        data class EventPlanner(val component: EventPlannerComponent) : Child()
         data class Settings(val component: SettingsComponent) : Child()
     }
 }
@@ -46,18 +35,11 @@ class DefaultRootComponent(
     componentContext: ComponentContext,
     private val storeFactory: StoreFactory,
     private val chatRepository: ChatRepository,
-    private val eventPlannerRepository: EventPlannerRepository,
     private val settingsRepository: SettingsRepository,
     // Chat Use Cases
     private val sendMessageUseCase: SendMessageUseCase,
     private val sendSystemPromptUseCase: SendSystemPromptUseCase,
     private val clearChatUseCase: ClearChatUseCase,
-    // Recipe Use Cases
-    private val getRecipeUseCase: GetRecipeUseCase,
-    // EventPlanner Use Cases
-    private val sendEventPlanMessageUseCase: SendEventPlanMessageUseCase,
-    private val startEventPlanConversationUseCase: StartEventPlanConversationUseCase,
-    private val clearEventPlanChatUseCase: ClearEventPlanChatUseCase,
     // Settings Use Cases
     private val updateThemeUseCase: UpdateThemeUseCase,
     private val updateTemperatureUseCase: UpdateTemperatureUseCase,
@@ -71,21 +53,13 @@ class DefaultRootComponent(
         childStack(
             source = navigation,
             serializer = Config.serializer(),
-            initialConfiguration = Config.Home,
+            initialConfiguration = Config.Chat,
             handleBackButton = true,
             childFactory = ::child,
         )
 
     private fun child(config: Config, componentContext: ComponentContext): RootComponent.Child =
         when (config) {
-            is Config.Home -> RootComponent.Child.Home(
-                DefaultHomeComponent(
-                    componentContext = componentContext,
-                    onNavigateToChat = ::navigateToChat,
-                    onNavigateToRecipes = ::navigateToRecipes,
-                    onNavigateToEventPlanner = ::navigateToEventPlanner
-                )
-            )
             is Config.Chat -> RootComponent.Child.Chat(
                 DefaultChatComponent(
                     componentContext = componentContext,
@@ -95,27 +69,7 @@ class DefaultRootComponent(
                     sendSystemPromptUseCase = sendSystemPromptUseCase,
                     clearChatUseCase = clearChatUseCase,
                     settingsRepository = settingsRepository,
-                    onNavigateBack = ::navigateBack,
                     onNavigateToSettings = ::navigateToSettings
-                )
-            )
-            is Config.Recipe -> RootComponent.Child.Recipe(
-                DefaultRecipeComponent(
-                    componentContext = componentContext,
-                    storeFactory = storeFactory,
-                    getRecipeUseCase = getRecipeUseCase,
-                    onNavigateBack = ::navigateBack
-                )
-            )
-            is Config.EventPlanner -> RootComponent.Child.EventPlanner(
-                DefaultEventPlannerComponent(
-                    componentContext = componentContext,
-                    storeFactory = storeFactory,
-                    eventPlannerRepository = eventPlannerRepository,
-                    sendMessageUseCase = sendEventPlanMessageUseCase,
-                    startConversationUseCase = startEventPlanConversationUseCase,
-                    clearChatUseCase = clearEventPlanChatUseCase,
-                    onNavigateBack = ::navigateBack
                 )
             )
             is Config.Settings -> RootComponent.Child.Settings(
@@ -132,18 +86,6 @@ class DefaultRootComponent(
             )
         }
 
-    override fun navigateToChat() {
-        navigation.push(Config.Chat)
-    }
-
-    override fun navigateToRecipes() {
-        navigation.push(Config.Recipe)
-    }
-
-    override fun navigateToEventPlanner() {
-        navigation.push(Config.EventPlanner)
-    }
-
     override fun navigateToSettings() {
         navigation.push(Config.Settings)
     }
@@ -155,16 +97,7 @@ class DefaultRootComponent(
     @Serializable
     private sealed interface Config {
         @Serializable
-        data object Home : Config
-
-        @Serializable
         data object Chat : Config
-
-        @Serializable
-        data object Recipe : Config
-
-        @Serializable
-        data object EventPlanner : Config
 
         @Serializable
         data object Settings : Config

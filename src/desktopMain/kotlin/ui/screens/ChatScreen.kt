@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import ui.components.AgentSidebar
 import ui.components.InputArea
 import ui.components.MessagesArea
 import ui.components.ModelSidebar
@@ -19,10 +20,10 @@ fun ChatScreen(component: component.ChatComponent) {
     val messages = state.messages
     val input = state.input
     val isTyping = state.isTyping
-    val systemPrompt = state.systemPrompt
-    val isEditorExpanded = state.isSystemPromptExpanded
     val availableModels = state.availableModels
     val selectedModel = state.selectedModel
+    val availableAgents = state.availableAgents
+    val selectedAgent = state.selectedAgent
 
     Column(
         modifier = Modifier
@@ -36,31 +37,13 @@ fun ChatScreen(component: component.ChatComponent) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                IconButton(onClick = component::onBackClick) {
-                    Text("←", style = MaterialTheme.typography.titleLarge)
-                }
-                Text(
-                    text = "AI Чат",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                IconButton(onClick = component::onToggleSystemPromptEditor) {
-                    Text(
-                        if (isEditorExpanded) "✏️" else "👤",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-                IconButton(onClick = component::onSettingsClick) {
-                    Text("⚙️", style = MaterialTheme.typography.titleLarge)
-                }
+            Text(
+                text = "AI Ассистент",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            IconButton(onClick = component::onSettingsClick) {
+                Text("⚙️", style = MaterialTheme.typography.titleLarge)
             }
         }
 
@@ -101,49 +84,13 @@ fun ChatScreen(component: component.ChatComponent) {
                 )
             }
 
-            // Правая панель - редактор роли агента
-            if (isEditorExpanded) {
-                Card(
-                    modifier = Modifier.width(400.dp).fillMaxHeight(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Роль агента",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            IconButton(onClick = component::onToggleSystemPromptEditor) {
-                                Text("✕", style = MaterialTheme.typography.titleMedium)
-                            }
-                        }
-
-                        OutlinedTextField(
-                            value = systemPrompt,
-                            onValueChange = component::onSystemPromptChange,
-                            placeholder = { Text("Введите описание роли AI агента") },
-                            modifier = Modifier.weight(1f).fillMaxWidth(),
-                            textStyle = MaterialTheme.typography.bodyMedium
-                        )
-
-                        Button(
-                            onClick = component::onSaveSystemPromptClick,
-                            enabled = systemPrompt.isNotEmpty(),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Сохранить и применить")
-                        }
-                    }
-                }
-            }
+            // Правая панель - выбор агента (всегда открыта)
+            AgentSidebar(
+                agents = availableAgents,
+                selectedAgent = selectedAgent,
+                onAgentSelect = component::onSelectAgent,
+                modifier = Modifier.width(320.dp).fillMaxHeight()
+            )
         }
     }
 }

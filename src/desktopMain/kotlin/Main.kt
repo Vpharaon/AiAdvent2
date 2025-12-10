@@ -88,21 +88,12 @@ fun main() = application {
         ) {
             // Repositories
             val chatRepository = koinInject<data.repository.ChatRepository>()
-            val eventPlannerRepository = koinInject<data.repository.EventPlannerRepository>()
             val settingsRepository = koinInject<SettingsRepository>()
 
             // Chat Use Cases
             val sendMessageUseCase = koinInject<domain.usecase.chat.SendMessageUseCase>()
             val sendSystemPromptUseCase = koinInject<domain.usecase.chat.SendSystemPromptUseCase>()
             val clearChatUseCase = koinInject<domain.usecase.chat.ClearChatUseCase>()
-
-            // Recipe Use Cases
-            val getRecipeUseCase = koinInject<domain.usecase.recipe.GetRecipeUseCase>()
-
-            // EventPlanner Use Cases
-            val sendEventPlanMessageUseCase = koinInject<domain.usecase.eventplanner.SendEventPlanMessageUseCase>()
-            val startEventPlanConversationUseCase = koinInject<domain.usecase.eventplanner.StartEventPlanConversationUseCase>()
-            val clearEventPlanChatUseCase = koinInject<domain.usecase.eventplanner.ClearEventPlanChatUseCase>()
 
             // Settings Use Cases
             val updateThemeUseCase = koinInject<domain.usecase.settings.UpdateThemeUseCase>()
@@ -115,15 +106,10 @@ fun main() = application {
                     componentContext = DefaultComponentContext(lifecycle = lifecycle),
                     storeFactory = DefaultStoreFactory(),
                     chatRepository = chatRepository,
-                    eventPlannerRepository = eventPlannerRepository,
                     settingsRepository = settingsRepository,
                     sendMessageUseCase = sendMessageUseCase,
                     sendSystemPromptUseCase = sendSystemPromptUseCase,
                     clearChatUseCase = clearChatUseCase,
-                    getRecipeUseCase = getRecipeUseCase,
-                    sendEventPlanMessageUseCase = sendEventPlanMessageUseCase,
-                    startEventPlanConversationUseCase = startEventPlanConversationUseCase,
-                    clearEventPlanChatUseCase = clearEventPlanChatUseCase,
                     updateThemeUseCase = updateThemeUseCase,
                     updateTemperatureUseCase = updateTemperatureUseCase,
                     updateMaxTokensUseCase = updateMaxTokensUseCase,
@@ -157,10 +143,7 @@ fun App(rootComponent: RootComponent) {
             stack = stack
         ) {
             when (val child = it.instance) {
-                is RootComponent.Child.Home -> HomeScreen(child.component)
                 is RootComponent.Child.Chat -> ChatScreen(child.component)
-                is RootComponent.Child.Recipe -> RecipeScreen(child.component)
-                is RootComponent.Child.EventPlanner -> EventPlanScreen(child.component)
                 is RootComponent.Child.Settings -> SettingsScreen(child.component)
             }
         }

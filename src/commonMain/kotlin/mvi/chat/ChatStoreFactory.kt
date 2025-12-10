@@ -44,9 +44,8 @@ internal class ChatStoreFactory(
         data class MessagesUpdated(val messages: List<domain.Message>) : Message
         data class InputUpdated(val text: String) : Message
         data class TypingUpdated(val isTyping: Boolean) : Message
-        data class SystemPromptUpdated(val systemPrompt: String) : Message
-        data class SystemPromptExpandedUpdated(val isExpanded: Boolean) : Message
         data class SelectedModelUpdated(val model: domain.LlmModel) : Message
+        data class SelectedAgentUpdated(val agent: domain.Agent?) : Message
     }
 
     private inner class ExecutorImpl :
@@ -102,33 +101,28 @@ internal class ChatStoreFactory(
                     clearChatUseCase()
                     dispatch(InputUpdated(""))
 
-                    scope.launch {
-                        dispatch(TypingUpdated(true))
-                        // Используем Use Case для отправки system prompt
-                        sendSystemPromptUseCase(state().systemPrompt)
-                        dispatch(TypingUpdated(false))
+                    // Если выбран агент, отправляем его системный промпт
+                    state().selectedAgent?.let { agent ->
+                        scope.launch {
+                            dispatch(TypingUpdated(true))
+                            sendSystemPromptUseCase(agent.systemPrompt)
+                            dispatch(TypingUpdated(false))
+                        }
                     }
                 }
 
-                ChatStore.Intent.SaveSystemPrompt -> {
+                is ChatStore.Intent.SelectAgent -> {
+                    // Очищаем чат при смене агента
+                    clearChatUseCase()
+                    dispatch(InputUpdated(""))
+                    dispatch(SelectedAgentUpdated(intent.agent))
+
+                    // Отправляем системный промпт выбранного агента
                     scope.launch {
                         dispatch(TypingUpdated(true))
-                        // Используем Use Case для отправки system prompt
-                        sendSystemPromptUseCase(state().systemPrompt)
+                        sendSystemPromptUseCase(intent.agent.systemPrompt)
                         dispatch(TypingUpdated(false))
                     }
-                }
-
-                is ChatStore.Intent.UpdateSystemPrompt -> {
-                    dispatch(
-                        message = SystemPromptUpdated(systemPrompt = intent.systemPrompt)
-                    )
-                }
-
-                ChatStore.Intent.ToggleSystemPromptEditor -> {
-                    dispatch(
-                        message = SystemPromptExpandedUpdated(isExpanded = !state().isSystemPromptExpanded)
-                    )
                 }
 
                 is ChatStore.Intent.SelectLlmModel -> {
@@ -148,9 +142,8 @@ internal class ChatStoreFactory(
                 is MessagesUpdated -> copy(messages = msg.messages)
                 is InputUpdated -> copy(input = msg.text)
                 is TypingUpdated -> copy(isTyping = msg.isTyping)
-                is SystemPromptUpdated -> copy(systemPrompt = msg.systemPrompt)
-                is SystemPromptExpandedUpdated -> copy(isSystemPromptExpanded = msg.isExpanded)
                 is SelectedModelUpdated -> copy(selectedModel = msg.model)
+                is SelectedAgentUpdated -> copy(selectedAgent = msg.agent)
             }
     }
 
