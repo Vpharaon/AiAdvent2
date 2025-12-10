@@ -18,6 +18,7 @@ import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import component.*
 import data.repository.SettingsRepository
 import di.appModule
+import di.desktopModule
 import domain.Theme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -89,7 +90,7 @@ fun main() = application {
     ) {
         KoinApplication(
             application = {
-                modules(appModule(apiKeys, appScope))
+                modules(appModule(apiKeys, appScope), desktopModule)
             }
         ) {
             // Repositories

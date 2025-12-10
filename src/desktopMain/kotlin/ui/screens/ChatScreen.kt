@@ -24,6 +24,7 @@ fun ChatScreen(component: component.ChatComponent) {
     val selectedModel = state.selectedModel
     val availableAgents = state.availableAgents
     val selectedAgent = state.selectedAgent
+    val inputTokenCount = state.inputTokenCount
 
     Column(
         modifier = Modifier
@@ -80,7 +81,8 @@ fun ChatScreen(component: component.ChatComponent) {
                     input = input,
                     onInputChange = component::onInputChange,
                     onSendClick = component::onSendClick,
-                    onClearClick = component::onClearClick
+                    onClearClick = component::onClearClick,
+                    tokenCount = inputTokenCount
                 )
             }
 

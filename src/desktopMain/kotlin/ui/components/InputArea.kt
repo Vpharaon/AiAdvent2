@@ -2,6 +2,7 @@ package ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -16,13 +17,28 @@ fun InputArea(
     input: String,
     onInputChange: (String) -> Unit,
     onSendClick: () -> Unit,
-    onClearClick: () -> Unit
+    onClearClick: () -> Unit,
+    tokenCount: Int? = null
 ) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.Bottom
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+        // Отображение количества токенов
+        if (tokenCount != null && tokenCount > 0) {
+            Text(
+                text = "Токенов: $tokenCount",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp)
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
         // Поле ввода сообщения
         OutlinedTextField(
             value = input,
@@ -60,6 +76,7 @@ fun InputArea(
             modifier = Modifier.height(56.dp)
         ) {
             Text("Очистить чат")
+        }
         }
     }
 }

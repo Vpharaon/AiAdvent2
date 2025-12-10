@@ -6,6 +6,7 @@ import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import data.repository.ChatRepository
+import domain.service.getTokenCounter
 import domain.usecase.chat.ClearChatUseCase
 import domain.usecase.chat.SendMessageUseCase
 import domain.usecase.chat.SendSystemPromptUseCase
@@ -46,10 +47,14 @@ internal class ChatStoreFactory(
         data class TypingUpdated(val isTyping: Boolean) : Message
         data class SelectedModelUpdated(val model: domain.LlmModel) : Message
         data class SelectedAgentUpdated(val agent: domain.Agent?) : Message
+        data class TokenCountUpdated(val tokenCount: Int?) : Message
     }
 
     private inner class ExecutorImpl :
         CoroutineExecutor<ChatStore.Intent, Action, ChatStore.State, Message, Nothing>() {
+
+        // Получаем TokenCounter при инициализации (может быть null на платформах без поддержки)
+        private val tokenCounter = getTokenCounter()
 
         override fun executeAction(action: Action) {
             super.executeAction(action)
@@ -78,6 +83,14 @@ internal class ChatStoreFactory(
                 is ChatStore.Intent.UpdateInput -> {
                     if (intent.text.length <= MAX_MESSAGE_LENGTH) {
                         dispatch(InputUpdated(intent.text))
+
+                        // Подсчитываем токены для введенного текста
+                        val tokenCount = if (intent.text.isNotBlank()) {
+                            tokenCounter?.countTokens(intent.text, state().selectedModel)
+                        } else {
+                            null
+                        }
+                        dispatch(TokenCountUpdated(tokenCount))
                     }
                 }
 
@@ -87,6 +100,7 @@ internal class ChatStoreFactory(
 
                     // Очищаем поле ввода
                     dispatch(InputUpdated(""))
+                    dispatch(TokenCountUpdated(null))
 
                     scope.launch {
                         dispatch(TypingUpdated(true))
@@ -107,6 +121,7 @@ internal class ChatStoreFactory(
                             println("Ошибка очистки чата: ${error.message}")
                         }
                     dispatch(InputUpdated(""))
+                    dispatch(TokenCountUpdated(null))
 
                     // Если выбран агент, отправляем его системный промпт
                     state().selectedAgent?.let { agent ->
@@ -128,6 +143,7 @@ internal class ChatStoreFactory(
                             println("Ошибка очистки чата при смене агента: ${error.message}")
                         }
                     dispatch(InputUpdated(""))
+                    dispatch(TokenCountUpdated(null))
                     dispatch(SelectedAgentUpdated(intent.agent))
 
                     // Отправляем системный промпт выбранного агента
@@ -147,6 +163,13 @@ internal class ChatStoreFactory(
                     dispatch(
                         message = SelectedModelUpdated(model = intent.model)
                     )
+
+                    // Пересчитываем токены для текущего ввода с новой моделью
+                    val currentInput = state().input
+                    if (currentInput.isNotBlank()) {
+                        val tokenCount = tokenCounter?.countTokens(currentInput, intent.model)
+                        dispatch(TokenCountUpdated(tokenCount))
+                    }
                 }
             }
         }
@@ -160,6 +183,7 @@ internal class ChatStoreFactory(
                 is TypingUpdated -> copy(isTyping = msg.isTyping)
                 is SelectedModelUpdated -> copy(selectedModel = msg.model)
                 is SelectedAgentUpdated -> copy(selectedAgent = msg.agent)
+                is TokenCountUpdated -> copy(inputTokenCount = msg.tokenCount)
             }
     }
 

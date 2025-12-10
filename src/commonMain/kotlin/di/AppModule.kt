@@ -83,4 +83,7 @@ fun appModule(apiKeys: Map<String, String>, coroutineScope: CoroutineScope) = mo
     factory {
         ResetSettingsUseCase(settingsRepository = get())
     }
+
+    // Domain Layer - Services
+    // Note: TokenCounter is desktop-only, will be provided separately
 }

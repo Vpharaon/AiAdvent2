@@ -90,6 +90,9 @@ kotlin {
 
                 // UI - Markdown rendering
                 implementation(libs.markdown)
+
+                // Token Counting
+                implementation(libs.jtokkit)
             }
         }
 
