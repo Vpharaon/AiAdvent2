@@ -147,7 +147,10 @@ class ChatRepositoryImpl(
                     id = chatResponse.id.orEmpty(),
                     content = it.content.orEmpty(),
                     role = MessageRole.ASSISTANT.value,
-                    timestamp = timestampMillis
+                    timestamp = timestampMillis,
+                    promptTokens = chatResponse.tokenUsage?.promptTokens,
+                    completionTokens = chatResponse.tokenUsage?.completionTokens,
+                    totalTokens = chatResponse.tokenUsage?.totalTokens
                 )
             }
 

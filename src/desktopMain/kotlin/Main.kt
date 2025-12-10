@@ -3,8 +3,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.arkivanov.decompose.DefaultComponentContext
@@ -79,7 +81,11 @@ fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
         title = "AI Advent",
-        state = rememberWindowState(width = 1200.dp, height = 800.dp)
+        state = rememberWindowState(
+            width = 1600.dp,
+            height = 900.dp,
+            position = WindowPosition(Alignment.Center)
+        )
     ) {
         KoinApplication(
             application = {
