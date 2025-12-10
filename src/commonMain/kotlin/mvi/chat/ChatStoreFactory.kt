@@ -90,15 +90,22 @@ internal class ChatStoreFactory(
 
                     scope.launch {
                         dispatch(TypingUpdated(true))
-                        // Используем Use Case вместо прямого вызова Repository
+                        // Используем Use Case с обработкой Result
                         sendMessageUseCase(messageText)
+                            .onFailure { error ->
+                                // Логируем ошибку (в production можно добавить аналитику)
+                                println("Ошибка отправки сообщения: ${error.message}")
+                            }
                         dispatch(TypingUpdated(false))
                     }
                 }
 
                 is ChatStore.Intent.ClearChat -> {
-                    // Используем Use Case для очистки
+                    // Используем Use Case для очистки с обработкой Result
                     clearChatUseCase()
+                        .onFailure { error ->
+                            println("Ошибка очистки чата: ${error.message}")
+                        }
                     dispatch(InputUpdated(""))
 
                     // Если выбран агент, отправляем его системный промпт
@@ -106,14 +113,20 @@ internal class ChatStoreFactory(
                         scope.launch {
                             dispatch(TypingUpdated(true))
                             sendSystemPromptUseCase(agent.systemPrompt)
+                                .onFailure { error ->
+                                    println("Ошибка отправки системного промпта: ${error.message}")
+                                }
                             dispatch(TypingUpdated(false))
                         }
                     }
                 }
 
                 is ChatStore.Intent.SelectAgent -> {
-                    // Очищаем чат при смене агента
+                    // Очищаем чат при смене агента с обработкой Result
                     clearChatUseCase()
+                        .onFailure { error ->
+                            println("Ошибка очистки чата при смене агента: ${error.message}")
+                        }
                     dispatch(InputUpdated(""))
                     dispatch(SelectedAgentUpdated(intent.agent))
 
@@ -121,6 +134,9 @@ internal class ChatStoreFactory(
                     scope.launch {
                         dispatch(TypingUpdated(true))
                         sendSystemPromptUseCase(intent.agent.systemPrompt)
+                            .onFailure { error ->
+                                println("Ошибка отправки системного промпта агента: ${error.message}")
+                            }
                         dispatch(TypingUpdated(false))
                     }
                 }
