@@ -113,6 +113,7 @@ fun ChatScreen(component: component.ChatComponent) {
                     onInputChange = component::onInputChange,
                     onSendClick = component::onSendClick,
                     onClearClick = component::onClearClick,
+                    onSummaryClick = component::onSummaryClick,
                     tokenCount = inputTokenCount,
                     totalPromptTokens = totalPromptTokens,
                     totalCompletionTokens = totalCompletionTokens,

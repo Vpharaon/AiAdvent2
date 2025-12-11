@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
  * Область ввода сообщения с кнопками управления и отображением статистики токенов.
  *
  * Компонент предоставляет текстовое поле для ввода сообщений пользователем,
- * кнопки отправки и очистки чата, а также отображает статистику использования токенов.
+ * кнопки отправки, очистки чата и создания сводки, а также отображает статистику использования токенов.
  *
  * Особенности:
  * - Поддержка многострочного ввода (до 4 строк)
@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
  * @param onInputChange Callback, вызываемый при изменении текста ввода
  * @param onSendClick Callback, вызываемый при нажатии кнопки "Отправить"
  * @param onClearClick Callback, вызываемый при нажатии кнопки "Очистить чат"
+ * @param onSummaryClick Callback, вызываемый при нажатии кнопки "Summary"
  * @param tokenCount Количество токенов в текущем вводе (null если не посчитано)
  * @param totalPromptTokens Общее количество токенов во всех промптах (запросах)
  * @param totalCompletionTokens Общее количество токенов во всех ответах
@@ -39,6 +40,7 @@ fun InputArea(
     onInputChange: (String) -> Unit,
     onSendClick: () -> Unit,
     onClearClick: () -> Unit,
+    onSummaryClick: () -> Unit,
     tokenCount: Int? = null,
     totalPromptTokens: Int = 0,
     totalCompletionTokens: Int = 0,
@@ -116,6 +118,14 @@ fun InputArea(
             enabled = input.trim().isNotEmpty()
         ) {
             Text("Отправить")
+        }
+
+        // Кнопка Summary
+        OutlinedButton(
+            onClick = onSummaryClick,
+            modifier = Modifier.height(56.dp)
+        ) {
+            Text("Сжатие")
         }
 
         // Кнопка Очистить чат

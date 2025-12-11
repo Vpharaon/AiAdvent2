@@ -166,6 +166,7 @@ fun main() = application {
             val sendMessageUseCase = koinInject<domain.usecase.chat.SendMessageUseCase>()
             val sendSystemPromptUseCase = koinInject<domain.usecase.chat.SendSystemPromptUseCase>()
             val clearChatUseCase = koinInject<domain.usecase.chat.ClearChatUseCase>()
+            val summarizeChatUseCase = koinInject<domain.usecase.chat.SummarizeChatUseCase>()
 
             /**
              * Инжектим Use Cases для работы с настройками.
@@ -188,6 +189,7 @@ fun main() = application {
                     sendMessageUseCase = sendMessageUseCase,
                     sendSystemPromptUseCase = sendSystemPromptUseCase,
                     clearChatUseCase = clearChatUseCase,
+                    summarizeChatUseCase = summarizeChatUseCase,
                     updateThemeUseCase = updateThemeUseCase,
                     updateTemperatureUseCase = updateTemperatureUseCase,
                     updateMaxTokensUseCase = updateMaxTokensUseCase,

@@ -11,6 +11,7 @@ import data.source.remote.LLMRemoteDataSourceImpl
 import domain.usecase.chat.ClearChatUseCase
 import domain.usecase.chat.SendMessageUseCase
 import domain.usecase.chat.SendSystemPromptUseCase
+import domain.usecase.chat.SummarizeChatUseCase
 import domain.usecase.settings.ResetSettingsUseCase
 import domain.usecase.settings.UpdateMaxTokensUseCase
 import domain.usecase.settings.UpdateTemperatureUseCase
@@ -60,6 +61,10 @@ fun appModule(apiKeys: Map<String, String>, coroutineScope: CoroutineScope) = mo
 
     factory {
         ClearChatUseCase(chatRepository = get())
+    }
+
+    factory {
+        SummarizeChatUseCase(chatRepository = get())
     }
 
     // Domain Layer - Settings Use Cases

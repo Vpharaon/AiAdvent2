@@ -34,6 +34,11 @@ interface ChatRepository {
      * Очищает все сообщения
      */
     fun clearMessages()
+
+    /**
+     * Создает сжатую версию истории диалога
+     */
+    suspend fun summarizeHistory()
 }
 
 /**
@@ -177,5 +182,99 @@ class ChatRepositoryImpl(
 
     override fun clearMessages() {
         _messages.value = emptyList()
+    }
+
+    /**
+     * Создает сжатую версию истории диалога
+     */
+    override suspend fun summarizeHistory() {
+        // Получаем текущие сообщения
+        val currentMessages = _messages.value
+
+        if (currentMessages.isEmpty()) {
+            return
+        }
+
+        // Формируем историю для сжатия
+        val historyText = currentMessages.joinToString("\n\n") { message ->
+            val roleLabel = when {
+                message.isUser -> MessageRole.USER.value
+                message.isAssistant -> MessageRole.ASSISTANT.value
+                message.isSystem -> MessageRole.SYSTEM.value
+                else -> message.role
+            }
+            "$roleLabel: ${message.content}"
+        }
+
+        // Создаем промпт для сжатия
+        val summarizePrompt = """
+            Выполни сжатие следующей истории диалога. Создай краткую сводку, которая сохранит все ключевые моменты,
+            важные детали и контекст разговора. Сводка должна быть достаточно подробной, чтобы можно было продолжить
+            общение на основе этой информации.
+
+            История диалога:
+            $historyText
+
+            Создай структурированную сводку диалога.
+        """.trimIndent()
+
+        // Создаем сообщение для отправки
+        val messages = listOf(
+            ChatMessage(
+                role = MessageRole.USER,
+                content = summarizePrompt
+            )
+        )
+
+        // Отправляем запрос
+        val settings = settingsRepository.getCurrentSettings()
+        val selectedModel = settings.selectedLlmModel
+        val result = remoteDataSource.sendMessages(
+            messages = messages,
+            temperature = settings.temperature,
+            maxTokens = settings.maxTokens,
+            apiUrl = selectedModel.apiUrl,
+            modelName = selectedModel.modelName
+        )
+
+        result.onSuccess { chatResponse ->
+            val summaryContent = chatResponse.choices?.firstOrNull()?.message?.content
+
+            if (summaryContent != null) {
+                // Очищаем всю историю
+                _messages.value = emptyList()
+
+                // Добавляем только сводку как единственное сообщение
+                val timestampMillis = chatResponse.created?.let { seconds ->
+                    if (seconds < 10_000_000_000L) seconds * 1000 else seconds
+                } ?: System.currentTimeMillis()
+
+                val summaryMessage = Message(
+                    id = chatResponse.id.orEmpty(),
+                    content = summaryContent,
+                    role = MessageRole.ASSISTANT.value,
+                    timestamp = timestampMillis,
+                    promptTokens = chatResponse.tokenUsage?.promptTokens,
+                    completionTokens = chatResponse.tokenUsage?.completionTokens,
+                    totalTokens = chatResponse.tokenUsage?.totalTokens
+                )
+
+                _messages.value = listOf(summaryMessage)
+            }
+        }.onFailure { error ->
+            // Если произошла ошибка, выводим сообщение об ошибке
+            val userFriendlyMessage = when (error) {
+                is ApiError -> error.getUserFriendlyMessage()
+                else -> "Ошибка при создании сводки: ${error.message ?: "Не удалось получить ответ от сервера"}"
+            }
+
+            val errorMessage = Message(
+                id = System.currentTimeMillis().toString(),
+                content = userFriendlyMessage,
+                role = MessageRole.ASSISTANT.value,
+                timestamp = System.currentTimeMillis()
+            )
+            _messages.value += errorMessage
+        }
     }
 }

@@ -68,6 +68,7 @@ internal class ChatStoreFactory(
     private val sendMessageUseCase: SendMessageUseCase,
     private val sendSystemPromptUseCase: SendSystemPromptUseCase,
     private val clearChatUseCase: ClearChatUseCase,
+    private val summarizeChatUseCase: domain.usecase.chat.SummarizeChatUseCase,
     private val settingsRepository: data.repository.SettingsRepository
 ) {
 
@@ -222,6 +223,23 @@ internal class ChatStoreFactory(
                                     println("Ошибка отправки системного промпта: ${error.message}")
                                 }
                         }
+                    }
+                }
+
+                is ChatStore.Intent.SummarizeChat -> {
+                    // Отменяем активный запрос перед сжатием
+                    cancelActiveRequest()
+
+                    // Очищаем поле ввода
+                    dispatch(InputUpdated(""))
+                    dispatch(TokenCountUpdated(null))
+
+                    // Используем безопасный wrapper для выполнения запроса
+                    executeLLMRequest {
+                        summarizeChatUseCase()
+                            .onFailure { error ->
+                                println("Ошибка сжатия истории: ${error.message}")
+                            }
                     }
                 }
 

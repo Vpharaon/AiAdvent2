@@ -12,6 +12,7 @@ interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> 
         data class UpdateInput(val text: String) : Intent
         data object SendMessage : Intent
         data object ClearChat : Intent
+        data object SummarizeChat : Intent
         data class SelectLlmModel(val model: LlmModel) : Intent
         data class SelectAgent(val agent: Agent) : Intent
     }

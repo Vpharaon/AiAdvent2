@@ -21,6 +21,7 @@ interface ChatComponent {
     fun onInputChange(text: String)
     fun onSendClick()
     fun onClearClick()
+    fun onSummaryClick()
     fun onSelectLlmModel(model: LlmModel)
     fun onSelectAgent(agent: Agent)
     fun onSettingsClick()
@@ -33,6 +34,7 @@ class DefaultChatComponent(
     sendMessageUseCase: SendMessageUseCase,
     sendSystemPromptUseCase: SendSystemPromptUseCase,
     clearChatUseCase: ClearChatUseCase,
+    summarizeChatUseCase: domain.usecase.chat.SummarizeChatUseCase,
     settingsRepository: data.repository.SettingsRepository,
     private val onNavigateToSettings: () -> Unit
 ) : ChatComponent, ComponentContext by componentContext {
@@ -44,6 +46,7 @@ class DefaultChatComponent(
             sendMessageUseCase = sendMessageUseCase,
             sendSystemPromptUseCase = sendSystemPromptUseCase,
             clearChatUseCase = clearChatUseCase,
+            summarizeChatUseCase = summarizeChatUseCase,
             settingsRepository = settingsRepository
         ).create()
     }
@@ -61,6 +64,10 @@ class DefaultChatComponent(
 
     override fun onClearClick() {
         store.accept(ChatStore.Intent.ClearChat)
+    }
+
+    override fun onSummaryClick() {
+        store.accept(ChatStore.Intent.SummarizeChat)
     }
 
     override fun onSelectLlmModel(model: LlmModel) {

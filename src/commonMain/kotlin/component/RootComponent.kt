@@ -13,6 +13,7 @@ import data.repository.SettingsRepository
 import domain.usecase.chat.ClearChatUseCase
 import domain.usecase.chat.SendMessageUseCase
 import domain.usecase.chat.SendSystemPromptUseCase
+import domain.usecase.chat.SummarizeChatUseCase
 import domain.usecase.settings.ResetSettingsUseCase
 import domain.usecase.settings.UpdateMaxTokensUseCase
 import domain.usecase.settings.UpdateTemperatureUseCase
@@ -40,6 +41,7 @@ class DefaultRootComponent(
     private val sendMessageUseCase: SendMessageUseCase,
     private val sendSystemPromptUseCase: SendSystemPromptUseCase,
     private val clearChatUseCase: ClearChatUseCase,
+    private val summarizeChatUseCase: SummarizeChatUseCase,
     // Settings Use Cases
     private val updateThemeUseCase: UpdateThemeUseCase,
     private val updateTemperatureUseCase: UpdateTemperatureUseCase,
@@ -68,6 +70,7 @@ class DefaultRootComponent(
                     sendMessageUseCase = sendMessageUseCase,
                     sendSystemPromptUseCase = sendSystemPromptUseCase,
                     clearChatUseCase = clearChatUseCase,
+                    summarizeChatUseCase = summarizeChatUseCase,
                     settingsRepository = settingsRepository,
                     onNavigateToSettings = ::navigateToSettings
                 )
