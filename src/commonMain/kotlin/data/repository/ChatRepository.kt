@@ -3,6 +3,7 @@ package data.repository
 import data.mapper.MessageMapper
 import data.network.model.ChatMessage
 import data.network.model.MessageRole
+import data.source.local.ChatLocalDataSource
 import data.source.remote.LLMRemoteDataSource
 import domain.ApiError
 import domain.Message
@@ -33,12 +34,17 @@ interface ChatRepository {
     /**
      * Очищает все сообщения
      */
-    fun clearMessages()
+    suspend fun clearMessages()
 
     /**
      * Создает сжатую версию истории диалога
      */
     suspend fun summarizeHistory()
+
+    /**
+     * Загружает историю чата из локального хранилища
+     */
+    suspend fun loadHistory()
 }
 
 /**
@@ -47,7 +53,8 @@ interface ChatRepository {
  */
 class ChatRepositoryImpl(
     private val remoteDataSource: LLMRemoteDataSource,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val localDataSource: ChatLocalDataSource? = null
 ) : ChatRepository {
     // In-memory cache для сообщений
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
@@ -110,6 +117,9 @@ class ChatRepositoryImpl(
         // Добавляем сообщение пользователя в список сообщений
         _messages.value += userDomainMessage
 
+        // Сохраняем историю с сообщением пользователя
+        localDataSource?.saveChatHistory(_messages.value)
+
         // Берем только последние MAX_HISTORY_MESSAGES сообщений для отправки в API
         // Это предотвращает превышение лимита токенов
         // Примечание: UI продолжает показывать все сообщения
@@ -161,6 +171,9 @@ class ChatRepositoryImpl(
 
             message?.let {
                 _messages.value += it
+
+                // Сохраняем всю историю в файл после каждого сообщения
+                localDataSource?.saveChatHistory(_messages.value)
             }
 
         }.onFailure { error ->
@@ -180,8 +193,20 @@ class ChatRepositoryImpl(
         }
     }
 
-    override fun clearMessages() {
+    override suspend fun clearMessages() {
         _messages.value = emptyList()
+        // Очищаем содержимое файла с историей (записываем пустой массив)
+        localDataSource?.clearChatHistory()
+    }
+
+    /**
+     * Загружает историю чата из локального хранилища
+     */
+    override suspend fun loadHistory() {
+        val history = localDataSource?.loadChatHistory() ?: emptyList()
+        if (history.isNotEmpty()) {
+            _messages.value = history
+        }
     }
 
     /**
@@ -260,6 +285,9 @@ class ChatRepositoryImpl(
                 )
 
                 _messages.value = listOf(summaryMessage)
+
+                // Сохраняем сводку в файл
+                localDataSource?.saveChatHistory(listOf(summaryMessage))
             }
         }.onFailure { error ->
             // Если произошла ошибка, выводим сообщение об ошибке

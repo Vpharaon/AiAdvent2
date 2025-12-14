@@ -10,6 +10,7 @@ import domain.service.getTokenCounter
 import domain.usecase.chat.ClearChatUseCase
 import domain.usecase.chat.SendMessageUseCase
 import domain.usecase.chat.SendSystemPromptUseCase
+import domain.usecase.chat.SummarizeChatUseCase
 import kotlinx.coroutines.launch
 import mvi.chat.ChatStoreFactory.Message.*
 
@@ -68,7 +69,7 @@ internal class ChatStoreFactory(
     private val sendMessageUseCase: SendMessageUseCase,
     private val sendSystemPromptUseCase: SendSystemPromptUseCase,
     private val clearChatUseCase: ClearChatUseCase,
-    private val summarizeChatUseCase: domain.usecase.chat.SummarizeChatUseCase,
+    private val summarizeChatUseCase: SummarizeChatUseCase,
     private val settingsRepository: data.repository.SettingsRepository
 ) {
 
@@ -152,6 +153,11 @@ internal class ChatStoreFactory(
 
             when (action) {
                 Action.InitAction -> {
+                    // Загружаем историю чата из файла при запуске
+                    scope.launch {
+                        chatRepository.loadHistory()
+                    }
+
                     // Подписка на изменения сообщений
                     scope.launch {
                         chatRepository.messages.collect { messages ->
@@ -207,10 +213,12 @@ internal class ChatStoreFactory(
                     cancelActiveRequest()
 
                     // Используем Use Case для очистки с обработкой Result
-                    clearChatUseCase()
-                        .onFailure { error ->
-                            println("Ошибка очистки чата: ${error.message}")
-                        }
+                    scope.launch {
+                        clearChatUseCase()
+                            .onFailure { error ->
+                                println("Ошибка очистки чата: ${error.message}")
+                            }
+                    }
                     dispatch(InputUpdated(""))
                     dispatch(TokenCountUpdated(null))
                     dispatch(CleanTokensCount)
@@ -248,10 +256,12 @@ internal class ChatStoreFactory(
                     cancelActiveRequest()
 
                     // Очищаем чат при смене агента с обработкой Result
-                    clearChatUseCase()
-                        .onFailure { error ->
-                            println("Ошибка очистки чата при смене агента: ${error.message}")
-                        }
+                    scope.launch {
+                        clearChatUseCase()
+                            .onFailure { error ->
+                                println("Ошибка очистки чата при смене агента: ${error.message}")
+                            }
+                    }
                     dispatch(InputUpdated(""))
                     dispatch(TokenCountUpdated(null))
                     dispatch(SelectedAgentUpdated(intent.agent))

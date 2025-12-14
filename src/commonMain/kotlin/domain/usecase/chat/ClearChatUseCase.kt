@@ -16,7 +16,7 @@ class ClearChatUseCase(
      *
      * @return Result<Unit> - успех или ошибка
      */
-    operator fun invoke(): Result<Unit> {
+    suspend operator fun invoke(): Result<Unit> {
         return try {
             chatRepository.clearMessages()
             Result.success(Unit)

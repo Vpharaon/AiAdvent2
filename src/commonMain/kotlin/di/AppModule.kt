@@ -46,7 +46,8 @@ fun appModule(apiKeys: Map<String, String>, coroutineScope: CoroutineScope) = mo
     single<ChatRepository> {
         ChatRepositoryImpl(
             remoteDataSource = get(),
-            settingsRepository = get()
+            settingsRepository = get(),
+            localDataSource = getOrNull()
         )
     }
 

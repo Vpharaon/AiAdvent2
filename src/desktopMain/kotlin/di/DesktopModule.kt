@@ -1,5 +1,7 @@
 package di
 
+import data.source.local.ChatLocalDataSource
+import data.source.local.ChatLocalDataSourceImpl
 import domain.service.TokenCounter
 import org.koin.dsl.module
 
@@ -11,5 +13,10 @@ val desktopModule = module {
     // Services - Desktop only
     single {
         TokenCounter()
+    }
+
+    // Data Sources - Desktop only
+    single<ChatLocalDataSource> {
+        ChatLocalDataSourceImpl()
     }
 }
