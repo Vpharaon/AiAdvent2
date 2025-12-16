@@ -3,6 +3,7 @@ package data.source.remote
 import data.network.LLMApi
 import data.network.model.ChatMessage
 import data.network.model.ChatResponse
+import data.network.model.Tool
 
 /**
  * Реализация удаленного источника данных для работы с LLM API.
@@ -22,7 +23,8 @@ class LLMRemoteDataSourceImpl(
         temperature: Double,
         maxTokens: Int?,
         apiUrl: String,
-        modelName: String
+        modelName: String,
+        tools: List<Tool>?
     ): Result<ChatResponse> {
         return try {
             llmApi.sendMessage(
@@ -30,7 +32,8 @@ class LLMRemoteDataSourceImpl(
                 temperature = temperature,
                 maxTokens = maxTokens,
                 apiUrl = apiUrl,
-                modelName = modelName
+                modelName = modelName,
+                tools = tools
             )
         } catch (e: Exception) {
             Result.failure(e)

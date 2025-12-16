@@ -2,10 +2,12 @@ package di
 
 import data.network.LLMApi
 import data.network.LLMApiClient
+import data.network.McpApiClient
 import data.repository.ChatRepository
 import data.repository.ChatRepositoryImpl
 import data.repository.SettingsRepository
 import data.repository.SettingsRepositoryImpl
+import data.service.McpWeatherService
 import data.source.remote.LLMRemoteDataSource
 import data.source.remote.LLMRemoteDataSourceImpl
 import domain.usecase.chat.ClearChatUseCase
@@ -33,9 +35,22 @@ fun appModule(apiKeys: Map<String, String>, coroutineScope: CoroutineScope) = mo
         LLMApiClient(apiKeys = apiKeys)
     }
 
+    single<McpApiClient> {
+        McpApiClient()
+    }
+
     // Data Layer - Data Sources
     single<LLMRemoteDataSource> {
         LLMRemoteDataSourceImpl(llmApi = get())
+    }
+
+    // Data Layer - Services
+    single<McpWeatherService> {
+        McpWeatherService(mcpClient = get())
+    }
+
+    single<data.repository.ToolCallHandler> {
+        data.repository.ToolCallHandler(weatherService = get())
     }
 
     // Data Layer - Repositories
@@ -47,7 +62,8 @@ fun appModule(apiKeys: Map<String, String>, coroutineScope: CoroutineScope) = mo
         ChatRepositoryImpl(
             remoteDataSource = get(),
             settingsRepository = get(),
-            localDataSource = getOrNull()
+            localDataSource = getOrNull(),
+            toolCallHandler = get()
         )
     }
 

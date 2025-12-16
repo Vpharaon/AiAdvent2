@@ -39,10 +39,11 @@ data class Agent(
      * Компаньон объект с утилитарными методами для работы с агентами.
      *
      * Все агенты теперь определены в отдельных файлах в пакете domain.agent:
-     * - RestaurantManagerAgent - организация мероприятий
-     * - ChefAgent - помощь в приготовлении блюд
      * - GeneralAssistantAgent - AI-наставник для обучения
      * - AndroidAiAgent - эксперт по Android разработке
+     * - WeatherAgent - метеоролог с доступом к MCP Weather сервису
+     * - RestaurantManagerAgent - организация мероприятий
+     * - ChefAgent - помощь в приготовлении блюд
      */
     companion object {
         /**
@@ -53,6 +54,7 @@ data class Agent(
         fun getAll(): List<Agent> = listOf(
             GeneralAssistantAgent,
             AndroidAiAgent,
+            WeatherAgent,
             RestaurantManagerAgent,
             ChefAgent
         )

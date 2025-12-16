@@ -1,7 +1,7 @@
 package data.repository
 
-import data.mapper.MessageMapper
 import data.network.model.ChatMessage
+import data.network.model.McpToolConverter
 import data.network.model.MessageRole
 import data.source.local.ChatLocalDataSource
 import data.source.remote.LLMRemoteDataSource
@@ -22,14 +22,20 @@ interface ChatRepository {
 
     /**
      * Отправляет system prompt с приветственным сообщением и учитывает историю
+     *
+     * @param prompt Системный промпт
+     * @param currentAgent Текущий агент (опционально, для поддержки tools)
      */
-    suspend fun sendSystemPromptWithHistory(prompt: String)
+    suspend fun sendSystemPromptWithHistory(prompt: String, currentAgent: domain.Agent? = null)
 
     /**
      * Отправляет сообщение пользователя с учетом истории
+     *
+     * @param userMessageText Текст сообщения пользователя
+     * @param currentAgent Текущий агент (опционально, для поддержки tools)
      */
 
-    suspend fun sendUserMessageWithHistory(userMessageText: String)
+    suspend fun sendUserMessageWithHistory(userMessageText: String, currentAgent: domain.Agent? = null)
 
     /**
      * Очищает все сообщения
@@ -54,7 +60,8 @@ interface ChatRepository {
 class ChatRepositoryImpl(
     private val remoteDataSource: LLMRemoteDataSource,
     private val settingsRepository: SettingsRepository,
-    private val localDataSource: ChatLocalDataSource? = null
+    private val localDataSource: ChatLocalDataSource? = null,
+    private val toolCallHandler: ToolCallHandler
 ) : ChatRepository {
     // In-memory cache для сообщений
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
@@ -69,7 +76,7 @@ class ChatRepositoryImpl(
     /**
      * Отправляет system prompt с приветственным сообщением и учитывает историю
      */
-    override suspend fun sendSystemPromptWithHistory(prompt: String) {
+    override suspend fun sendSystemPromptWithHistory(prompt: String, currentAgent: domain.Agent?) {
         // Конвертируем текущие сообщения в ChatMessage
         val history = _messages.value
             .takeLast(MAX_HISTORY_MESSAGES)
@@ -99,13 +106,13 @@ class ChatRepositoryImpl(
             }
         }
 
-        sendMessage(messages = messages)
+        sendMessage(messages = messages, currentAgent = currentAgent)
     }
 
     /**
      * Отправляет сообщение пользователя с учетом истории
      */
-    override suspend fun sendUserMessageWithHistory(userMessageText: String) {
+    override suspend fun sendUserMessageWithHistory(userMessageText: String, currentAgent: domain.Agent?) {
         // Создаем сообщение пользователя для UI
         val userDomainMessage = Message(
             id = System.currentTimeMillis().toString(),
@@ -132,52 +139,79 @@ class ChatRepositoryImpl(
                 )
             }
 
-        sendMessage(messages = messages)
+        sendMessage(messages = messages, currentAgent = currentAgent)
     }
 
     /**
      * Отправляет сообщение пользователя, получает ответ от LLM и обновляет кеш сообщений.
      * Использует DataSource вместо прямого вызова API.
+     * Поддерживает tool calls для агентов с hasTools = true.
      */
-    private suspend fun sendMessage(messages: List<ChatMessage>) {
+    private suspend fun sendMessage(
+        messages: List<ChatMessage>,
+        currentAgent: domain.Agent? = null
+    ) {
         val settings = settingsRepository.getCurrentSettings()
         val selectedModel = settings.selectedLlmModel
+
+        // Определяем нужны ли tools для текущего агента
+        val tools = McpToolConverter.createWeatherTools()
+
         val result = remoteDataSource.sendMessages(
             messages = messages,
             temperature = settings.temperature,
             maxTokens = settings.maxTokens,
             apiUrl = selectedModel.apiUrl,
-            modelName = selectedModel.modelName
+            modelName = selectedModel.modelName,
+            tools = tools
         )
 
         result.onSuccess { chatResponse ->
+            val assistantMessage = chatResponse.choices?.firstOrNull()?.message
 
-            val message = chatResponse.choices?.firstOrNull()?.message?.let {
-                // API возвращает timestamp в секундах, конвертируем в миллисекунды
-                val timestampMillis = chatResponse.created?.let { seconds ->
-                    if (seconds < 10_000_000_000L) seconds * 1000 else seconds
-                } ?: System.currentTimeMillis()
+            // Проверяем есть ли tool calls в ответе
+            if (assistantMessage?.toolCalls != null && assistantMessage.toolCalls.isNotEmpty()) {
+                // LLM хочет вызвать функцию
+                // 1. Сохраняем сообщение ассистента с tool calls (не показываем пользователю)
+                // 2. Выполняем tool calls
+                val toolResultMessages = toolCallHandler.handleToolCalls(assistantMessage.toolCalls)
 
-                Message(
-                    id = chatResponse.id.orEmpty(),
-                    content = it.content.orEmpty(),
-                    role = MessageRole.ASSISTANT.value,
-                    timestamp = timestampMillis,
-                    promptTokens = chatResponse.tokenUsage?.promptTokens,
-                    completionTokens = chatResponse.tokenUsage?.completionTokens,
-                    totalTokens = chatResponse.tokenUsage?.totalTokens
-                )
-            }
+                // 3. Отправляем новый запрос с результатами tool calls
+                val newMessages = messages + listOf(
+                    ChatMessage(
+                        role = MessageRole.ASSISTANT,
+                        content = assistantMessage.content,
+                        toolCalls = assistantMessage.toolCalls
+                    )
+                ) + toolResultMessages
 
-            message?.let {
-                _messages.value += it
+                // Рекурсивно вызываем sendMessage с результатами
+                sendMessage(newMessages, currentAgent)
+            } else {
+                // Обычный ответ без tool calls
+                val message = assistantMessage?.let {
+                    val timestampMillis = chatResponse.created?.let { seconds ->
+                        if (seconds < 10_000_000_000L) seconds * 1000 else seconds
+                    } ?: System.currentTimeMillis()
 
-                // Сохраняем всю историю в файл после каждого сообщения
-                localDataSource?.saveChatHistory(_messages.value)
+                    Message(
+                        id = chatResponse.id.orEmpty(),
+                        content = it.content.orEmpty(),
+                        role = MessageRole.ASSISTANT.value,
+                        timestamp = timestampMillis,
+                        promptTokens = chatResponse.tokenUsage?.promptTokens,
+                        completionTokens = chatResponse.tokenUsage?.completionTokens,
+                        totalTokens = chatResponse.tokenUsage?.totalTokens
+                    )
+                }
+
+                message?.let {
+                    _messages.value += it
+                    localDataSource?.saveChatHistory(_messages.value)
+                }
             }
 
         }.onFailure { error ->
-            // Если произошла ошибка (сеть, API и т.д.)
             val userFriendlyMessage = when (error) {
                 is ApiError -> error.getUserFriendlyMessage()
                 else -> "Ошибка: ${error.message ?: "Не удалось получить ответ от сервера"}"

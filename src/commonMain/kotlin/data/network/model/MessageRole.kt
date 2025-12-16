@@ -14,5 +14,18 @@ enum class MessageRole(val value: String) {
     @SerialName("user")
     USER("user"),
     @SerialName("assistant")
-    ASSISTANT("assistant")
+    ASSISTANT("assistant"),
+    @SerialName("tool")
+    TOOL("tool");
+
+    companion object {
+        /**
+         * Создает MessageRole из строкового значения.
+         * @param value Строковое значение роли (например, "system", "user", "assistant", "tool")
+         * @return MessageRole или null если значение не распознано
+         */
+        fun valueOf(value: String): MessageRole? {
+            return entries.find { it.value.equals(value, ignoreCase = true) }
+        }
+    }
 }

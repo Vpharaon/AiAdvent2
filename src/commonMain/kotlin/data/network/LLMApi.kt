@@ -2,7 +2,7 @@ package data.network
 
 import data.network.model.ChatMessage
 import data.network.model.ChatResponse
-import domain.ApiError
+import data.network.model.Tool
 
 /**
  * Интерфейс для работы с LLM API.
@@ -17,15 +17,17 @@ interface LLMApi {
      * @param maxTokens Максимальное количество токенов
      * @param apiUrl URL эндпоинта API
      * @param modelName Название модели для использования
+     * @param tools Список доступных инструментов (функций) для LLM
      * @return [Result], содержащий либо [ChatResponse] в случае успеха,
-     *         либо [ApiError] в случае ошибки.
+     *         либо ошибку в случае неудачи.
      */
     suspend fun sendMessage(
         messages: List<ChatMessage>,
         temperature: Double? = null,
         maxTokens: Int? = null,
         apiUrl: String,
-        modelName: String
+        modelName: String,
+        tools: List<Tool>? = null
     ): Result<ChatResponse>
 
     /**

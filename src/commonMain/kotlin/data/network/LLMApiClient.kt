@@ -34,6 +34,7 @@ class LLMApiClient(
                 ignoreUnknownKeys = true
                 isLenient = true
                 prettyPrint = true
+                encodeDefaults = true  // Включаем сериализацию полей со значениями по умолчанию
             })
         }
 
@@ -59,14 +60,16 @@ class LLMApiClient(
         temperature: Double?,
         maxTokens: Int?,
         apiUrl: String,
-        modelName: String
+        modelName: String,
+        tools: List<Tool>?
     ): Result<ChatResponse> {
         return try {
             val request = ChatRequest(
                 model = modelName,
                 messages = messages,
                 temperature = temperature,
-                max_tokens = maxTokens
+                max_tokens = maxTokens,
+                tools = tools
             )
 
             // Получаем правильный API ключ для данного URL

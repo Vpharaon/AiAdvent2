@@ -17,5 +17,6 @@ data class ChatRequest(
     val top_p: Double? = null,       // Альтернатива temperature. Ядро выборки.
     val max_tokens: Int? = null,     // Максимальное количество токенов в ответе.
     val stream: Boolean = false,     // Нужно ли возвращать ответ частями (потоково).
-    val stop: List<String>? = null   // Список токенов, при встрече которых генерация остановится.
+    val stop: List<String>? = null,  // Список токенов, при встрече которых генерация остановится.
+    val tools: List<Tool>? = null    // Список доступных инструментов (function calling)
 )
