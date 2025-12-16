@@ -30,6 +30,7 @@ interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> 
         val inputTokenCount: Int? = null,
         val totalPromptTokens: Int = 0,
         val totalCompletionTokens: Int = 0,
-        val totalTokens: Int = 0
+        val totalTokens: Int = 0,
+        val tools: String = ""
     )
 }

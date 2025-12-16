@@ -93,6 +93,11 @@ kotlin {
 
                 // Token Counting
                 implementation(libs.jtokkit)
+
+                // Model Context Protocol
+                implementation(libs.mcp.kotlin.sdk)
+
+                implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
             }
         }
 

@@ -1,6 +1,8 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="AiAdvent2-desktop-1.0-SNAPSHOT">
     <output-path>$PROJECT_DIR$/build/libs</output-path>
-    <root id="archive" name="AiAdvent2-desktop-1.0-SNAPSHOT.jar" />
+    <root id="archive" name="AiAdvent2-desktop-1.0-SNAPSHOT.jar">
+      <element id="module-output" name="AiAdvent2.desktopMain" />
+    </root>
   </artifact>
 </component>

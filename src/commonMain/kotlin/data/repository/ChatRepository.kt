@@ -7,6 +7,12 @@ import data.source.local.ChatLocalDataSource
 import data.source.remote.LLMRemoteDataSource
 import domain.ApiError
 import domain.Message
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.sse.SSE
+import io.modelcontextprotocol.kotlin.sdk.client.Client
+import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
+import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -203,10 +209,48 @@ class ChatRepositoryImpl(
      * Загружает историю чата из локального хранилища
      */
     override suspend fun loadHistory() {
-        val history = localDataSource?.loadChatHistory() ?: emptyList()
+        /*val history = localDataSource?.loadChatHistory() ?: emptyList()
         if (history.isNotEmpty()) {
             _messages.value = history
-        }
+        }*/
+
+
+
+            // Создаём HTTP-клиент с поддержкой SSE
+            val httpClient = HttpClient(CIO) {
+                install(SSE)
+            }
+
+            // Создаём MCP-клиент
+            val client = Client(
+                clientInfo = Implementation(
+                    name = "example-sse-client",
+                    version = "1.0.0"
+                )
+            )
+
+            // Настраиваем SSE-транспорт
+            val transport = SseClientTransport(
+                client = httpClient,
+                urlString = "https://mcp.deepwiki.com/sse"
+            )
+
+            // Подключаемся к серверу
+            client.connect(transport)
+
+            // Получаем список доступных инструментов
+            val tools = client.listTools()
+
+
+
+        _messages.value = listOf(
+            Message(
+                id = System.currentTimeMillis().toString(),
+                content = tools.toString(),
+                role = MessageRole.SYSTEM.value,
+                timestamp = System.currentTimeMillis(),
+            )
+        )
     }
 
     /**
