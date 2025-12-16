@@ -51,4 +51,16 @@ object WeatherToolRequestBuilder {
             )
         )
     }
+
+    fun getCityTime(city: String): McpToolCallRequest {
+        return McpToolCallRequest(
+            id = System.currentTimeMillis().toString(),
+            params = ToolCallParams(
+                name = "get_city_time",
+                arguments = buildJsonObject {
+                    put("city", city)
+                }
+            )
+        )
+    }
 }

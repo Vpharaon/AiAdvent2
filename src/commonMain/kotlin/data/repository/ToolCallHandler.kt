@@ -64,6 +64,17 @@ class ToolCallHandler(
                     }
                 }
 
+                "get_city_time" -> {
+                    val args = json.parseToJsonElement(toolCall.function.arguments).jsonObject
+                    val city = args["city"]?.jsonPrimitive?.content
+                        ?: return "Error: City parameter is required"
+
+                    val result = weatherService.getCityTime(city)
+                    result.getOrElse { error ->
+                        "Error getting city time: ${error.message}"
+                    }
+                }
+
                 else -> "Error: Unknown tool '${toolCall.function.name}'"
             }
         } catch (e: Exception) {

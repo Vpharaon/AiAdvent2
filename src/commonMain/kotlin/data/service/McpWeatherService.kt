@@ -73,6 +73,36 @@ class McpWeatherService(
     }
 
     /**
+     * Получить текущее время, дату и информацию о часовом поясе для города
+     *
+     * @param city Название города (например, "London", "Moscow", "Tokyo")
+     * @return Текстовое описание времени или ошибка
+     */
+    suspend fun getCityTime(city: String): Result<String> {
+        return try {
+            val request = WeatherToolRequestBuilder.getCityTime(city)
+            val response = mcpClient.callTool(request)
+
+            response.fold(
+                onSuccess = { toolResponse ->
+                    val content = toolResponse.result?.content?.firstOrNull()?.text
+                    if (content != null) {
+                        Result.success(content)
+                    } else {
+                        Result.failure(ApiError.UnknownError(message = "No content in time response"))
+                    }
+                },
+                onFailure = { error ->
+                    Result.failure(error)
+                }
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to get city time", cause = e))
+        }
+    }
+
+    /**
      * Закрыть клиент
      */
     fun close() {

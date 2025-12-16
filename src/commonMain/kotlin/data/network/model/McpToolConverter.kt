@@ -88,4 +88,31 @@ object McpToolConverter {
             )
         )
     }
+
+    /**
+     * Создает список инструментов для работы со временем
+     */
+    fun createTimeTools(): List<Tool> {
+        return listOf(
+            Tool(
+                type = "function",
+                function = FunctionDefinition(
+                    name = "get_city_time",
+                    description = "Get current time, date, and timezone information for a specified city. Returns current time, date, day of week, timezone, UTC offset, DST status, and Unix timestamp.",
+                    parameters = buildJsonObject {
+                        put("type", JsonPrimitive("object"))
+                        put("properties", buildJsonObject {
+                            put("city", buildJsonObject {
+                                put("type", JsonPrimitive("string"))
+                                put("description", JsonPrimitive("City name in English (e.g., 'London', 'Moscow', 'Tokyo')"))
+                            })
+                        })
+                        put("required", buildJsonArray {
+                            add(JsonPrimitive("city"))
+                        })
+                    }
+                )
+            )
+        )
+    }
 }
