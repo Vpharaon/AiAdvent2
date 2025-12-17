@@ -8,6 +8,7 @@ import data.repository.ChatRepositoryImpl
 import data.repository.SettingsRepository
 import data.repository.SettingsRepositoryImpl
 import data.service.McpWeatherService
+import data.service.McpReminderService
 import data.source.remote.LLMRemoteDataSource
 import data.source.remote.LLMRemoteDataSourceImpl
 import domain.usecase.chat.ClearChatUseCase
@@ -49,8 +50,15 @@ fun appModule(apiKeys: Map<String, String>, coroutineScope: CoroutineScope) = mo
         McpWeatherService(mcpClient = get())
     }
 
+    single<McpReminderService> {
+        McpReminderService(mcpClient = get())
+    }
+
     single<data.repository.ToolCallHandler> {
-        data.repository.ToolCallHandler(weatherService = get())
+        data.repository.ToolCallHandler(
+            weatherService = get(),
+            reminderService = get()
+        )
     }
 
     // Data Layer - Repositories

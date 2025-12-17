@@ -155,7 +155,9 @@ class ChatRepositoryImpl(
         val selectedModel = settings.selectedLlmModel
 
         // Определяем нужны ли tools для текущего агента
-        val tools = McpToolConverter.createWeatherTools() + McpToolConverter.createTimeTools()
+        val tools = McpToolConverter.createWeatherTools() +
+                    McpToolConverter.createTimeTools() +
+                    McpToolConverter.createReminderTools()
 
         val result = remoteDataSource.sendMessages(
             messages = messages,

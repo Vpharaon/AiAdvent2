@@ -42,6 +42,7 @@ data class Agent(
      * - GeneralAssistantAgent - AI-наставник для обучения
      * - AndroidAiAgent - эксперт по Android разработке
      * - WeatherAgent - метеоролог с доступом к MCP Weather сервису
+     * - ReminderAgent - менеджер задач с доступом к системе напоминаний
      * - RestaurantManagerAgent - организация мероприятий
      * - ChefAgent - помощь в приготовлении блюд
      */
@@ -55,6 +56,7 @@ data class Agent(
             GeneralAssistantAgent,
             AndroidAiAgent,
             WeatherAgent,
+            ReminderAgent,
             RestaurantManagerAgent,
             ChefAgent
         )
