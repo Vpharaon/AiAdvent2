@@ -53,10 +53,10 @@ data class Agent(
          * @return Список агентов в порядке приоритета отображения в UI
          */
         fun getAll(): List<Agent> = listOf(
+            ReminderAgent,
             GeneralAssistantAgent,
             AndroidAiAgent,
             WeatherAgent,
-            ReminderAgent,
             RestaurantManagerAgent,
             ChefAgent
         )

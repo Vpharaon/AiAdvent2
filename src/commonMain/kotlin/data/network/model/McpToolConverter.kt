@@ -117,34 +117,43 @@ object McpToolConverter {
     }
 
     /**
-     * Создает список инструментов для работы с напоминаниями
+     * Создает список инструментов для работы с задачами
      */
     fun createReminderTools(): List<Tool> {
         return listOf(
-            // Создать напоминание
+            // Создать задачу
             Tool(
                 type = "function",
                 function = FunctionDefinition(
-                    name = "add_reminder",
-                    description = "Create a new reminder/task with title, description, optional due date and priority. Use this when user wants to remember something or create a task.",
+                    name = "add_task",
+                    description = "Create a new task with optional title (auto-generated from description if not provided), description, reminder time, optional recurrence, and importance level. Use this when user wants to create a task or reminder.",
                     parameters = buildJsonObject {
                         put("type", JsonPrimitive("object"))
                         put("properties", buildJsonObject {
                             put("title", buildJsonObject {
                                 put("type", JsonPrimitive("string"))
-                                put("description", JsonPrimitive("Short title of the task"))
+                                put("description", JsonPrimitive("Short title of the task (optional, auto-generated if not provided)"))
                             })
                             put("description", buildJsonObject {
                                 put("type", JsonPrimitive("string"))
                                 put("description", JsonPrimitive("Detailed description of the task"))
                             })
-                            put("due_date", buildJsonObject {
+                            put("reminder_time", buildJsonObject {
                                 put("type", JsonPrimitive("string"))
-                                put("description", JsonPrimitive("Due date in ISO format (2024-12-17T15:30:00)"))
+                                put("description", JsonPrimitive("Reminder time in ISO format (2024-12-17T15:30:00)"))
                             })
-                            put("priority", buildJsonObject {
+                            put("recurrence", buildJsonObject {
                                 put("type", JsonPrimitive("string"))
-                                put("description", JsonPrimitive("Task priority"))
+                                put("description", JsonPrimitive("Recurrence pattern (optional)"))
+                                put("enum", buildJsonArray {
+                                    add(JsonPrimitive("DAILY"))
+                                    add(JsonPrimitive("WEEKLY"))
+                                    add(JsonPrimitive("MONTHLY"))
+                                })
+                            })
+                            put("importance", buildJsonObject {
+                                put("type", JsonPrimitive("string"))
+                                put("description", JsonPrimitive("Task importance level"))
                                 put("enum", buildJsonArray {
                                     add(JsonPrimitive("LOW"))
                                     add(JsonPrimitive("MEDIUM"))
@@ -154,18 +163,18 @@ object McpToolConverter {
                             })
                         })
                         put("required", buildJsonArray {
-                            add(JsonPrimitive("title"))
                             add(JsonPrimitive("description"))
+                            add(JsonPrimitive("reminder_time"))
                         })
                     }
                 )
             ),
-            // Список напоминаний
+            // Список задач
             Tool(
                 type = "function",
                 function = FunctionDefinition(
-                    name = "list_reminders",
-                    description = "Get list of all reminders or filter by status. Use this when user wants to see their tasks or reminders.",
+                    name = "list_tasks",
+                    description = "Get list of all tasks or filter by status. Use this when user wants to see their tasks.",
                     parameters = buildJsonObject {
                         put("type", JsonPrimitive("object"))
                         put("properties", buildJsonObject {
@@ -175,7 +184,6 @@ object McpToolConverter {
                                 put("enum", buildJsonArray {
                                     add(JsonPrimitive("ACTIVE"))
                                     add(JsonPrimitive("COMPLETED"))
-                                    add(JsonPrimitive("ARCHIVED"))
                                 })
                             })
                         })
@@ -183,18 +191,18 @@ object McpToolConverter {
                     }
                 )
             ),
-            // Получить конкретное напоминание
+            // Получить конкретную задачу
             Tool(
                 type = "function",
                 function = FunctionDefinition(
-                    name = "get_reminder",
-                    description = "Get detailed information about a specific reminder by ID.",
+                    name = "get_task",
+                    description = "Get detailed information about a specific task by ID.",
                     parameters = buildJsonObject {
                         put("type", JsonPrimitive("object"))
                         put("properties", buildJsonObject {
                             put("id", buildJsonObject {
                                 put("type", JsonPrimitive("integer"))
-                                put("description", JsonPrimitive("Reminder ID"))
+                                put("description", JsonPrimitive("Task ID"))
                             })
                         })
                         put("required", buildJsonArray {
@@ -203,18 +211,18 @@ object McpToolConverter {
                     }
                 )
             ),
-            // Отметить как выполненное
+            // Отметить как выполненную
             Tool(
                 type = "function",
                 function = FunctionDefinition(
-                    name = "complete_reminder",
-                    description = "Mark a reminder as completed. Use this when user finishes a task.",
+                    name = "complete_task",
+                    description = "Mark a task as completed. Use this when user finishes a task.",
                     parameters = buildJsonObject {
                         put("type", JsonPrimitive("object"))
                         put("properties", buildJsonObject {
                             put("id", buildJsonObject {
                                 put("type", JsonPrimitive("integer"))
-                                put("description", JsonPrimitive("Reminder ID"))
+                                put("description", JsonPrimitive("Task ID"))
                             })
                         })
                         put("required", buildJsonArray {
@@ -223,18 +231,18 @@ object McpToolConverter {
                     }
                 )
             ),
-            // Удалить напоминание
+            // Удалить задачу
             Tool(
                 type = "function",
                 function = FunctionDefinition(
-                    name = "delete_reminder",
-                    description = "Delete a reminder permanently. Use this when user wants to remove a task.",
+                    name = "delete_task",
+                    description = "Delete a task permanently. Use this when user wants to remove a task.",
                     parameters = buildJsonObject {
                         put("type", JsonPrimitive("object"))
                         put("properties", buildJsonObject {
                             put("id", buildJsonObject {
                                 put("type", JsonPrimitive("integer"))
-                                put("description", JsonPrimitive("Reminder ID"))
+                                put("description", JsonPrimitive("Task ID"))
                             })
                         })
                         put("required", buildJsonArray {
@@ -243,12 +251,58 @@ object McpToolConverter {
                     }
                 )
             ),
-            // Сводка по напоминаниям
+            // Получить задачи на конкретную дату
             Tool(
                 type = "function",
                 function = FunctionDefinition(
-                    name = "get_reminders_summary",
-                    description = "Get summary of all reminders including statistics, overdue, high-priority, and upcoming tasks. Use this when user wants an overview of their tasks.",
+                    name = "get_tasks_for_date",
+                    description = "Get all tasks scheduled for a specific date. Use this when user asks about tasks on a particular day.",
+                    parameters = buildJsonObject {
+                        put("type", JsonPrimitive("object"))
+                        put("properties", buildJsonObject {
+                            put("date", buildJsonObject {
+                                put("type", JsonPrimitive("string"))
+                                put("description", JsonPrimitive("Date in ISO format (2024-12-17)"))
+                            })
+                        })
+                        put("required", buildJsonArray {
+                            add(JsonPrimitive("date"))
+                        })
+                    }
+                )
+            ),
+            // Получить задачи по важности
+            Tool(
+                type = "function",
+                function = FunctionDefinition(
+                    name = "get_tasks_by_importance",
+                    description = "Get tasks filtered by importance level. Use this when user asks about high-priority or urgent tasks.",
+                    parameters = buildJsonObject {
+                        put("type", JsonPrimitive("object"))
+                        put("properties", buildJsonObject {
+                            put("importance", buildJsonObject {
+                                put("type", JsonPrimitive("string"))
+                                put("description", JsonPrimitive("Importance level"))
+                                put("enum", buildJsonArray {
+                                    add(JsonPrimitive("LOW"))
+                                    add(JsonPrimitive("MEDIUM"))
+                                    add(JsonPrimitive("HIGH"))
+                                    add(JsonPrimitive("URGENT"))
+                                })
+                            })
+                        })
+                        put("required", buildJsonArray {
+                            add(JsonPrimitive("importance"))
+                        })
+                    }
+                )
+            ),
+            // Сводка по задачам
+            Tool(
+                type = "function",
+                function = FunctionDefinition(
+                    name = "get_tasks_summary",
+                    description = "Get summary of all tasks including statistics, overdue, high-priority, and upcoming tasks. Use this when user wants an overview of their tasks.",
                     parameters = buildJsonObject {
                         put("type", JsonPrimitive("object"))
                         put("properties", buildJsonObject {})
@@ -261,7 +315,7 @@ object McpToolConverter {
                 type = "function",
                 function = FunctionDefinition(
                     name = "set_notification_schedule",
-                    description = "Set up automatic periodic notifications with reminders summary. Use this when user wants to receive regular updates about their tasks.",
+                    description = "Set up automatic periodic notifications with tasks summary. Use this when user wants to receive regular updates about their tasks.",
                     parameters = buildJsonObject {
                         put("type", JsonPrimitive("object"))
                         put("properties", buildJsonObject {

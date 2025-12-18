@@ -78,69 +78,92 @@ class ToolCallHandler(
                     }
                 }
 
-                // Reminder tools
-                "add_reminder" -> {
+                // Task tools
+                "add_task" -> {
                     val args = json.parseToJsonElement(toolCall.function.arguments).jsonObject
                     val title = args["title"]?.jsonPrimitive?.content
-                        ?: return "Error: Title parameter is required"
                     val description = args["description"]?.jsonPrimitive?.content
                         ?: return "Error: Description parameter is required"
-                    val dueDate = args["due_date"]?.jsonPrimitive?.content
-                    val priority = args["priority"]?.jsonPrimitive?.content ?: "MEDIUM"
+                    val reminderTime = args["reminder_time"]?.jsonPrimitive?.content
+                        ?: return "Error: reminder_time parameter is required"
+                    val recurrence = args["recurrence"]?.jsonPrimitive?.content
+                    val importance = args["importance"]?.jsonPrimitive?.content ?: "MEDIUM"
 
-                    val result = reminderService.addReminder(title, description, dueDate, priority)
+                    val result = reminderService.addReminder(title, description, reminderTime, recurrence, importance)
                     result.getOrElse { error ->
-                        "Error adding reminder: ${error.message}"
+                        "Error adding task: ${error.message}"
                     }
                 }
 
-                "list_reminders" -> {
+                "list_tasks" -> {
                     val args = json.parseToJsonElement(toolCall.function.arguments).jsonObject
                     val status = args["status"]?.jsonPrimitive?.content
 
                     val result = reminderService.listReminders(status)
                     result.getOrElse { error ->
-                        "Error listing reminders: ${error.message}"
+                        "Error listing tasks: ${error.message}"
                     }
                 }
 
-                "get_reminder" -> {
+                "get_task" -> {
                     val args = json.parseToJsonElement(toolCall.function.arguments).jsonObject
                     val id = args["id"]?.jsonPrimitive?.int
                         ?: return "Error: ID parameter is required"
 
                     val result = reminderService.getReminder(id)
                     result.getOrElse { error ->
-                        "Error getting reminder: ${error.message}"
+                        "Error getting task: ${error.message}"
                     }
                 }
 
-                "complete_reminder" -> {
+                "complete_task" -> {
                     val args = json.parseToJsonElement(toolCall.function.arguments).jsonObject
                     val id = args["id"]?.jsonPrimitive?.int
                         ?: return "Error: ID parameter is required"
 
                     val result = reminderService.completeReminder(id)
                     result.getOrElse { error ->
-                        "Error completing reminder: ${error.message}"
+                        "Error completing task: ${error.message}"
                     }
                 }
 
-                "delete_reminder" -> {
+                "delete_task" -> {
                     val args = json.parseToJsonElement(toolCall.function.arguments).jsonObject
                     val id = args["id"]?.jsonPrimitive?.int
                         ?: return "Error: ID parameter is required"
 
                     val result = reminderService.deleteReminder(id)
                     result.getOrElse { error ->
-                        "Error deleting reminder: ${error.message}"
+                        "Error deleting task: ${error.message}"
                     }
                 }
 
-                "get_reminders_summary" -> {
+                "get_tasks_for_date" -> {
+                    val args = json.parseToJsonElement(toolCall.function.arguments).jsonObject
+                    val date = args["date"]?.jsonPrimitive?.content
+                        ?: return "Error: date parameter is required"
+
+                    val result = reminderService.getTasksForDate(date)
+                    result.getOrElse { error ->
+                        "Error getting tasks for date: ${error.message}"
+                    }
+                }
+
+                "get_tasks_by_importance" -> {
+                    val args = json.parseToJsonElement(toolCall.function.arguments).jsonObject
+                    val importance = args["importance"]?.jsonPrimitive?.content
+                        ?: return "Error: importance parameter is required"
+
+                    val result = reminderService.getTasksByImportance(importance)
+                    result.getOrElse { error ->
+                        "Error getting tasks by importance: ${error.message}"
+                    }
+                }
+
+                "get_tasks_summary" -> {
                     val result = reminderService.getRemindersSummary()
                     result.getOrElse { error ->
-                        "Error getting reminders summary: ${error.message}"
+                        "Error getting tasks summary: ${error.message}"
                     }
                 }
 

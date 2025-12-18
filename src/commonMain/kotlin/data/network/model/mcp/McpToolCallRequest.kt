@@ -66,40 +66,42 @@ object WeatherToolRequestBuilder {
 }
 
 /**
- * Вспомогательный класс для создания запросов на работу с напоминаниями
+ * Вспомогательный класс для создания запросов на работу с задачами
  */
 object ReminderToolRequestBuilder {
     /**
-     * Создать новое напоминание
+     * Создать новую задачу
      */
     fun addReminder(
-        title: String,
+        title: String? = null,
         description: String,
-        dueDate: String? = null,
-        priority: String = "MEDIUM"
+        reminderTime: String,
+        recurrence: String? = null,
+        importance: String = "MEDIUM"
     ): McpToolCallRequest {
         return McpToolCallRequest(
             id = System.currentTimeMillis().toString(),
             params = ToolCallParams(
-                name = "add_reminder",
+                name = "add_task",
                 arguments = buildJsonObject {
-                    put("title", title)
+                    title?.let { put("title", it) }
                     put("description", description)
-                    dueDate?.let { put("due_date", it) }
-                    put("priority", priority)
+                    put("reminder_time", reminderTime)
+                    recurrence?.let { put("recurrence", it) }
+                    put("importance", importance)
                 }
             )
         )
     }
 
     /**
-     * Получить список напоминаний
+     * Получить список задач
      */
     fun listReminders(status: String? = null): McpToolCallRequest {
         return McpToolCallRequest(
             id = System.currentTimeMillis().toString(),
             params = ToolCallParams(
-                name = "list_reminders",
+                name = "list_tasks",
                 arguments = buildJsonObject {
                     status?.let { put("status", it) }
                 }
@@ -108,13 +110,13 @@ object ReminderToolRequestBuilder {
     }
 
     /**
-     * Получить конкретное напоминание по ID
+     * Получить конкретную задачу по ID
      */
     fun getReminder(id: Int): McpToolCallRequest {
         return McpToolCallRequest(
             id = System.currentTimeMillis().toString(),
             params = ToolCallParams(
-                name = "get_reminder",
+                name = "get_task",
                 arguments = buildJsonObject {
                     put("id", id)
                 }
@@ -123,13 +125,13 @@ object ReminderToolRequestBuilder {
     }
 
     /**
-     * Пометить напоминание как выполненное
+     * Пометить задачу как выполненную
      */
     fun completeReminder(id: Int): McpToolCallRequest {
         return McpToolCallRequest(
             id = System.currentTimeMillis().toString(),
             params = ToolCallParams(
-                name = "complete_reminder",
+                name = "complete_task",
                 arguments = buildJsonObject {
                     put("id", id)
                 }
@@ -138,13 +140,13 @@ object ReminderToolRequestBuilder {
     }
 
     /**
-     * Удалить напоминание
+     * Удалить задачу
      */
     fun deleteReminder(id: Int): McpToolCallRequest {
         return McpToolCallRequest(
             id = System.currentTimeMillis().toString(),
             params = ToolCallParams(
-                name = "delete_reminder",
+                name = "delete_task",
                 arguments = buildJsonObject {
                     put("id", id)
                 }
@@ -153,14 +155,44 @@ object ReminderToolRequestBuilder {
     }
 
     /**
-     * Получить сводку по всем напоминаниям
+     * Получить сводку по всем задачам
      */
     fun getRemindersSummary(): McpToolCallRequest {
         return McpToolCallRequest(
             id = System.currentTimeMillis().toString(),
             params = ToolCallParams(
-                name = "get_reminders_summary",
+                name = "get_tasks_summary",
                 arguments = buildJsonObject {}
+            )
+        )
+    }
+
+    /**
+     * Получить все задачи на конкретную дату
+     */
+    fun getTasksForDate(date: String): McpToolCallRequest {
+        return McpToolCallRequest(
+            id = System.currentTimeMillis().toString(),
+            params = ToolCallParams(
+                name = "get_tasks_for_date",
+                arguments = buildJsonObject {
+                    put("date", date)
+                }
+            )
+        )
+    }
+
+    /**
+     * Получить задачи отфильтрованные по уровню важности
+     */
+    fun getTasksByImportance(importance: String): McpToolCallRequest {
+        return McpToolCallRequest(
+            id = System.currentTimeMillis().toString(),
+            params = ToolCallParams(
+                name = "get_tasks_by_importance",
+                arguments = buildJsonObject {
+                    put("importance", importance)
+                }
             )
         )
     }

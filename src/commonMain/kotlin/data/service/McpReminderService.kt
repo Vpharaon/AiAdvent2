@@ -5,28 +5,30 @@ import data.network.model.mcp.ReminderToolRequestBuilder
 import domain.ApiError
 
 /**
- * Сервис для работы с напоминаниями через MCP сервер
+ * Сервис для работы с задачами через MCP сервер
  */
 class McpReminderService(
     private val mcpClient: McpApiClient = McpApiClient()
 ) {
     /**
-     * Создать новое напоминание
+     * Создать новую задачу
      *
-     * @param title Краткое название задачи
-     * @param description Детальное описание
-     * @param dueDate Срок выполнения в ISO формате (2024-12-17T15:30:00)
-     * @param priority Приоритет - LOW, MEDIUM, HIGH, URGENT (по умолчанию MEDIUM)
-     * @return Результат создания напоминания или ошибка
+     * @param title Краткое название задачи (опционально, может быть автоматически сгенерирован из описания)
+     * @param description Детальное описание задачи
+     * @param reminderTime Время напоминания в ISO формате (2024-12-17T15:30:00)
+     * @param recurrence Повторение - DAILY, WEEKLY, MONTHLY (опционально)
+     * @param importance Важность - LOW, MEDIUM, HIGH, URGENT (по умолчанию MEDIUM)
+     * @return Результат создания задачи или ошибка
      */
     suspend fun addReminder(
-        title: String,
+        title: String? = null,
         description: String,
-        dueDate: String? = null,
-        priority: String = "MEDIUM"
+        reminderTime: String,
+        recurrence: String? = null,
+        importance: String = "MEDIUM"
     ): Result<String> {
         return try {
-            val request = ReminderToolRequestBuilder.addReminder(title, description, dueDate, priority)
+            val request = ReminderToolRequestBuilder.addReminder(title, description, reminderTime, recurrence, importance)
             val response = mcpClient.callTool(request)
 
             response.fold(
@@ -35,7 +37,7 @@ class McpReminderService(
                     if (content != null) {
                         Result.success(content)
                     } else {
-                        Result.failure(ApiError.UnknownError(message = "No content in add reminder response"))
+                        Result.failure(ApiError.UnknownError(message = "No content in add task response"))
                     }
                 },
                 onFailure = { error ->
@@ -44,15 +46,15 @@ class McpReminderService(
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to add reminder", cause = e))
+            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to add task", cause = e))
         }
     }
 
     /**
-     * Получить список всех напоминаний или отфильтровать по статусу
+     * Получить список всех задач или отфильтровать по статусу
      *
-     * @param status Фильтр по статусу - ACTIVE, COMPLETED, ARCHIVED
-     * @return Список напоминаний или ошибка
+     * @param status Фильтр по статусу - ACTIVE, COMPLETED
+     * @return Список задач или ошибка
      */
     suspend fun listReminders(status: String? = null): Result<String> {
         return try {
@@ -65,7 +67,7 @@ class McpReminderService(
                     if (content != null) {
                         Result.success(content)
                     } else {
-                        Result.failure(ApiError.UnknownError(message = "No content in list reminders response"))
+                        Result.failure(ApiError.UnknownError(message = "No content in list tasks response"))
                     }
                 },
                 onFailure = { error ->
@@ -74,15 +76,15 @@ class McpReminderService(
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to list reminders", cause = e))
+            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to list tasks", cause = e))
         }
     }
 
     /**
-     * Получить детальную информацию о конкретном напоминании
+     * Получить детальную информацию о конкретной задаче
      *
-     * @param id ID напоминания
-     * @return Информация о напоминании или ошибка
+     * @param id ID задачи
+     * @return Информация о задаче или ошибка
      */
     suspend fun getReminder(id: Int): Result<String> {
         return try {
@@ -95,7 +97,7 @@ class McpReminderService(
                     if (content != null) {
                         Result.success(content)
                     } else {
-                        Result.failure(ApiError.UnknownError(message = "No content in get reminder response"))
+                        Result.failure(ApiError.UnknownError(message = "No content in get task response"))
                     }
                 },
                 onFailure = { error ->
@@ -104,14 +106,14 @@ class McpReminderService(
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to get reminder", cause = e))
+            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to get task", cause = e))
         }
     }
 
     /**
-     * Пометить напоминание как выполненное
+     * Пометить задачу как выполненную
      *
-     * @param id ID напоминания
+     * @param id ID задачи
      * @return Результат операции или ошибка
      */
     suspend fun completeReminder(id: Int): Result<String> {
@@ -125,7 +127,7 @@ class McpReminderService(
                     if (content != null) {
                         Result.success(content)
                     } else {
-                        Result.failure(ApiError.UnknownError(message = "No content in complete reminder response"))
+                        Result.failure(ApiError.UnknownError(message = "No content in complete task response"))
                     }
                 },
                 onFailure = { error ->
@@ -134,14 +136,14 @@ class McpReminderService(
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to complete reminder", cause = e))
+            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to complete task", cause = e))
         }
     }
 
     /**
-     * Удалить напоминание
+     * Удалить задачу
      *
-     * @param id ID напоминания
+     * @param id ID задачи
      * @return Результат операции или ошибка
      */
     suspend fun deleteReminder(id: Int): Result<String> {
@@ -155,7 +157,7 @@ class McpReminderService(
                     if (content != null) {
                         Result.success(content)
                     } else {
-                        Result.failure(ApiError.UnknownError(message = "No content in delete reminder response"))
+                        Result.failure(ApiError.UnknownError(message = "No content in delete task response"))
                     }
                 },
                 onFailure = { error ->
@@ -164,14 +166,74 @@ class McpReminderService(
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to delete reminder", cause = e))
+            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to delete task", cause = e))
         }
     }
 
     /**
-     * Получить сводку по всем напоминаниям (статистика, просроченные, приоритетные, предстоящие)
+     * Получить все задачи на конкретную дату
      *
-     * @return Сводка по напоминаниям или ошибка
+     * @param date Дата в ISO формате (2024-12-17)
+     * @return Список задач на указанную дату или ошибка
+     */
+    suspend fun getTasksForDate(date: String): Result<String> {
+        return try {
+            val request = ReminderToolRequestBuilder.getTasksForDate(date)
+            val response = mcpClient.callTool(request)
+
+            response.fold(
+                onSuccess = { toolResponse ->
+                    val content = toolResponse.result?.content?.firstOrNull()?.text
+                    if (content != null) {
+                        Result.success(content)
+                    } else {
+                        Result.failure(ApiError.UnknownError(message = "No content in get tasks for date response"))
+                    }
+                },
+                onFailure = { error ->
+                    Result.failure(error)
+                }
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to get tasks for date", cause = e))
+        }
+    }
+
+    /**
+     * Получить задачи отфильтрованные по уровню важности
+     *
+     * @param importance Уровень важности - LOW, MEDIUM, HIGH, URGENT
+     * @return Список задач с указанным уровнем важности или ошибка
+     */
+    suspend fun getTasksByImportance(importance: String): Result<String> {
+        return try {
+            val request = ReminderToolRequestBuilder.getTasksByImportance(importance)
+            val response = mcpClient.callTool(request)
+
+            response.fold(
+                onSuccess = { toolResponse ->
+                    val content = toolResponse.result?.content?.firstOrNull()?.text
+                    if (content != null) {
+                        Result.success(content)
+                    } else {
+                        Result.failure(ApiError.UnknownError(message = "No content in get tasks by importance response"))
+                    }
+                },
+                onFailure = { error ->
+                    Result.failure(error)
+                }
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to get tasks by importance", cause = e))
+        }
+    }
+
+    /**
+     * Получить сводку по всем задачам (статистика, просроченные, приоритетные, предстоящие)
+     *
+     * @return Сводка по задачам или ошибка
      */
     suspend fun getRemindersSummary(): Result<String> {
         return try {
@@ -184,7 +246,7 @@ class McpReminderService(
                     if (content != null) {
                         Result.success(content)
                     } else {
-                        Result.failure(ApiError.UnknownError(message = "No content in summary response"))
+                        Result.failure(ApiError.UnknownError(message = "No content in tasks summary response"))
                     }
                 },
                 onFailure = { error ->
@@ -193,12 +255,12 @@ class McpReminderService(
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to get reminders summary", cause = e))
+            Result.failure(ApiError.UnknownError(message = e.message ?: "Failed to get tasks summary", cause = e))
         }
     }
 
     /**
-     * Настроить автоматические периодические уведомления с сводкой по напоминаниям
+     * Настроить автоматические периодические уведомления с сводкой по задачам
      *
      * @param intervalMinutes Интервал в минутах (60 = каждый час, 1440 = раз в день)
      * @param enabled Включить/выключить уведомления (по умолчанию true)
